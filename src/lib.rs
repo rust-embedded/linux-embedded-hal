@@ -1,6 +1,14 @@
 //! Implementation of [`embedded-hal`] traits for Linux devices
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
+//!
+//! # Drivers
+//!
+//! This crate lets you use a bunch of platform agnostic drivers that are based on the
+//! `embedded-hal` traits. You can find them on crates.io by [searching for the embedded-hal
+//! keyword][0].
+//!
+//! [0]: https://crates.io/keywords/embedded-hal
 
 #![deny(missing_docs)]
 #![deny(warnings)]
@@ -21,14 +29,14 @@ use spidev::SpidevTransfer;
 pub struct Pin(pub sysfs_gpio::Pin);
 
 impl Pin {
-    /// See [`sysfs_gpio::Pin::new`][0]
+    /// See [`sysfs_gpio::Pin::new`][0] for details.
     ///
     /// [0]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html#method.new
     pub fn new(pin_num: u64) -> Pin {
         Pin(sysfs_gpio::Pin::new(pin_num))
     }
 
-    /// See [`sysfs_gpio::Pin::from_path`][0]
+    /// See [`sysfs_gpio::Pin::from_path`][0] for details.
     ///
     /// [0]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html#method.from_path
     pub fn from_path<P>(path: P) -> sysfs_gpio::Result<Pin>
@@ -77,7 +85,7 @@ impl ops::DerefMut for Pin {
 pub struct Spidev(pub spidev::Spidev);
 
 impl Spidev {
-    /// See [`spidev::Spidev::open`][0]
+    /// See [`spidev::Spidev::open`][0] for details.
     ///
     /// [0]: https://docs.rs/spidev/0.3.0/spidev/struct.Spidev.html#method.open
     pub fn open<P>(path: P) -> io::Result<Self>

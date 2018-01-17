@@ -1,6 +1,6 @@
 # `linux-embedded-hal`
 
-> Implementation of [`embedded-hal`] traits for Linux devices
+> Implementation of the [`embedded-hal`] traits for Linux devices
 
 [`embedded-hal`]: https://crates.io/crates/embedded-hal
 

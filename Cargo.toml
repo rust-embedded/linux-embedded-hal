@@ -1,6 +1,11 @@
 [package]
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
+categories = ["embedded", "hardware-support"]
+description = "Implementation of the `embedded-hal` traits for Linux devices"
+keywords = ["Linux", "hal"]
+license = "MIT OR Apache-2.0"
 name = "linux-embedded-hal"
+repository = "https://github.com/japaric/linux-embedded-hal"
 version = "0.1.0"
 
 [dependencies]
