@@ -5,3 +5,5 @@ set -euxo pipefail
 main() {
     cross check --target $TARGET
 }
+
+main
