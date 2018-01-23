@@ -13,15 +13,75 @@
 #![deny(missing_docs)]
 #![deny(warnings)]
 
+extern crate cast;
 extern crate embedded_hal as hal;
 pub extern crate spidev;
 pub extern crate sysfs_gpio;
 
 use std::io::{self, Write};
-use std::ops;
 use std::path::Path;
+use std::time::Duration;
+use std::{ops, thread};
 
+use cast::{u32, u64};
 use spidev::SpidevTransfer;
+
+/// Empty struct that provides delay functionality on top of `thread::sleep`
+pub struct Delay;
+
+impl hal::blocking::delay::DelayUs<u8> for Delay {
+    fn delay_us(&mut self, n: u8) {
+        thread::sleep(Duration::new(0, u32(n) * 1000))
+    }
+}
+
+impl hal::blocking::delay::DelayUs<u16> for Delay {
+    fn delay_us(&mut self, n: u16) {
+        thread::sleep(Duration::new(0, u32(n) * 1000))
+    }
+}
+
+impl hal::blocking::delay::DelayUs<u32> for Delay {
+    fn delay_us(&mut self, n: u32) {
+        let secs = n / 1_000_000;
+        let nsecs = (n % 1_000_000) * 1_000;
+
+        thread::sleep(Duration::new(u64(secs), nsecs))
+    }
+}
+
+impl hal::blocking::delay::DelayUs<u64> for Delay {
+    fn delay_us(&mut self, n: u64) {
+        let secs = n / 1_000_000;
+        let nsecs = ((n % 1_000_000) * 1_000) as u32;
+
+        thread::sleep(Duration::new(secs, nsecs))
+    }
+}
+
+impl hal::blocking::delay::DelayMs<u8> for Delay {
+    fn delay_ms(&mut self, n: u8) {
+        thread::sleep(Duration::from_millis(u64(n)))
+    }
+}
+
+impl hal::blocking::delay::DelayMs<u16> for Delay {
+    fn delay_ms(&mut self, n: u16) {
+        thread::sleep(Duration::from_millis(u64(n)))
+    }
+}
+
+impl hal::blocking::delay::DelayMs<u32> for Delay {
+    fn delay_ms(&mut self, n: u32) {
+        thread::sleep(Duration::from_millis(u64(n)))
+    }
+}
+
+impl hal::blocking::delay::DelayMs<u64> for Delay {
+    fn delay_ms(&mut self, n: u64) {
+        thread::sleep(Duration::from_millis(n))
+    }
+}
 
 /// Newtype around [`sysfs_gpio::Pin`] that implements the `embedded-hal` traits
 ///
