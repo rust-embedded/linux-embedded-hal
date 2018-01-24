@@ -15,6 +15,7 @@
 
 extern crate cast;
 extern crate embedded_hal as hal;
+pub extern crate i2cdev;
 pub extern crate spidev;
 pub extern crate sysfs_gpio;
 
@@ -24,6 +25,7 @@ use std::time::Duration;
 use std::{ops, thread};
 
 use cast::{u32, u64};
+use i2cdev::core::I2CDevice;
 use spidev::SpidevTransfer;
 
 /// Empty struct that provides delay functionality on top of `thread::sleep`
@@ -134,6 +136,67 @@ impl ops::Deref for Pin {
 }
 
 impl ops::DerefMut for Pin {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+/// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
+///
+/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html
+pub struct I2cdev(pub i2cdev::linux::LinuxI2CDevice);
+
+impl I2cdev {
+    /// See [`i2cdev::linux::LinuxI2CDevice::new`][0] for details.
+    ///
+    /// [0]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
+    pub fn new<P>(path: P, address: u16) -> Result<Self, i2cdev::linux::LinuxI2CError>
+    where
+        P: AsRef<Path>,
+    {
+        i2cdev::linux::LinuxI2CDevice::new(path, address).map(I2cdev)
+    }
+}
+
+impl hal::blocking::i2c::Read for I2cdev {
+    type Error = i2cdev::linux::LinuxI2CError;
+
+    fn read(&mut self, _address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+        self.0.read(buffer)
+    }
+}
+
+impl hal::blocking::i2c::Write for I2cdev {
+    type Error = i2cdev::linux::LinuxI2CError;
+
+    fn write(&mut self, _address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.0.write(bytes)
+    }
+}
+
+impl hal::blocking::i2c::WriteRead for I2cdev {
+    type Error = i2cdev::linux::LinuxI2CError;
+
+    fn write_read(
+        &mut self,
+        _address: u8,
+        bytes: &[u8],
+        buffer: &mut [u8],
+    ) -> Result<(), Self::Error> {
+        self.0.write(bytes)?;
+        self.0.read(buffer)
+    }
+}
+
+impl ops::Deref for I2cdev {
+    type Target = i2cdev::linux::LinuxI2CDevice;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ops::DerefMut for I2cdev {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
