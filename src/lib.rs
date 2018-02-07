@@ -20,7 +20,7 @@ pub extern crate spidev;
 pub extern crate sysfs_gpio;
 
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::{ops, thread};
 
@@ -144,33 +144,52 @@ impl ops::DerefMut for Pin {
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
 /// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html
-pub struct I2cdev(pub i2cdev::linux::LinuxI2CDevice);
+pub struct I2cdev {
+    inner: i2cdev::linux::LinuxI2CDevice,
+    path: PathBuf,
+    address: Option<u8>,
+}
 
 impl I2cdev {
     /// See [`i2cdev::linux::LinuxI2CDevice::new`][0] for details.
     ///
     /// [0]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
-    pub fn new<P>(path: P, address: u16) -> Result<Self, i2cdev::linux::LinuxI2CError>
+    pub fn new<P>(path: P) -> Result<Self, i2cdev::linux::LinuxI2CError>
     where
         P: AsRef<Path>,
     {
-        i2cdev::linux::LinuxI2CDevice::new(path, address).map(I2cdev)
+        let dev = I2cdev {
+            path: path.as_ref().to_path_buf(),
+            inner: i2cdev::linux::LinuxI2CDevice::new(path, 0)?,
+            address: None,
+        };
+        Ok(dev)
+    }
+
+    fn set_address(&mut self, address: u8) -> Result<(), i2cdev::linux::LinuxI2CError> {
+        if self.address != Some(address) {
+            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, address as u16)?;
+            self.address = Some(address);
+        }
+        Ok(())
     }
 }
 
 impl hal::blocking::i2c::Read for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn read(&mut self, _address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
-        self.0.read(buffer)
+    fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+        self.set_address(address)?;
+        self.inner.read(buffer)
     }
 }
 
 impl hal::blocking::i2c::Write for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn write(&mut self, _address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.0.write(bytes)
+    fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+        self.set_address(address)?;
+        self.inner.write(bytes)
     }
 }
 
@@ -179,12 +198,13 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
 
     fn write_read(
         &mut self,
-        _address: u8,
+        address: u8,
         bytes: &[u8],
         buffer: &mut [u8],
     ) -> Result<(), Self::Error> {
-        self.0.write(bytes)?;
-        self.0.read(buffer)
+        self.set_address(address)?;
+        self.inner.write(bytes)?;
+        self.inner.read(buffer)
     }
 }
 
@@ -192,13 +212,13 @@ impl ops::Deref for I2cdev {
     type Target = i2cdev::linux::LinuxI2CDevice;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.inner
     }
 }
 
 impl ops::DerefMut for I2cdev {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.inner
     }
 }
 
