@@ -111,11 +111,11 @@ impl Pin {
 
 impl hal::digital::OutputPin for Pin {
     fn is_low(&self) -> bool {
-        unimplemented!()
+        self.0.get_value().unwrap() == 0
     }
 
     fn is_high(&self) -> bool {
-        unimplemented!()
+        self.0.get_value().unwrap() != 0
     }
 
     fn set_low(&mut self) {
