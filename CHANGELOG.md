@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.2.0] - 2018-05-14
+
+### Changed
+
+- [breaking-change] moved to v0.2.x of `embedded-hal`.
+
 ## [v0.1.1] - 2018-02-13
 
 ### Added

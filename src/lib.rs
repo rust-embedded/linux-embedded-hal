@@ -110,14 +110,6 @@ impl Pin {
 }
 
 impl hal::digital::OutputPin for Pin {
-    fn is_low(&self) -> bool {
-        unimplemented!()
-    }
-
-    fn is_high(&self) -> bool {
-        unimplemented!()
-    }
-
     fn set_low(&mut self) {
         self.0.set_value(0).unwrap()
     }
