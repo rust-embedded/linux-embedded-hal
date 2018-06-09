@@ -17,6 +17,8 @@ extern crate embedded_hal as hal;
 pub extern crate i2cdev;
 pub extern crate spidev;
 pub extern crate sysfs_gpio;
+pub extern crate serial;
+pub extern crate nb;
 
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -26,6 +28,8 @@ use std::{ops, thread};
 use cast::{u32, u64};
 use i2cdev::core::I2CDevice;
 use spidev::SpidevTransfer;
+
+pub mod serial_impl;
 
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
