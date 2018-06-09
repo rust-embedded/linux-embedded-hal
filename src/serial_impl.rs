@@ -1,6 +1,6 @@
 //! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.1/embedded_hal/serial/index.html)
 
-use hal::serial::Read;
+use hal::serial::{Read, Write};
 use nb;
 use serial;
 
@@ -22,6 +22,25 @@ impl Read<u8> for Serial {
         } else {
             Err(nb::Error::WouldBlock)
         }
+    }
+}
+
+impl Write<u8> for Serial {
+    type Error = serial::Error;
+
+    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+        use std::io::Write;
+        self.0
+            .write(&[word])
+            .map_err(|err| nb::Error::Other(Self::Error::from(err)))?;
+        Ok(())
+    }
+
+    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+        use std::io::Write;
+        self.0
+            .flush()
+            .map_err(|err| nb::Error::Other(Self::Error::from(err)))
     }
 }
 
