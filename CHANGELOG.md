@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.2.1] - 2018-10-25
+
+### Added
+
+- implementation of the unproven `embedded_hal::::digital::InputPin` trait. 
+
 ## [v0.2.0] - 2018-05-14
 
 ### Changed
