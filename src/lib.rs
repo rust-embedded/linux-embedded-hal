@@ -119,6 +119,20 @@ impl hal::digital::OutputPin for Pin {
     }
 }
 
+impl hal::digital::InputPin for Pin {
+    fn is_high(&self) -> bool{
+        if !self.0.get_active_low().unwrap() {
+            self.0.get_value().unwrap() != 0
+        } else {
+            self.0.get_value().unwrap() == 0
+        }
+    }
+
+    fn is_low(&self) -> bool{
+        !self.is_high()
+    }
+}
+
 impl ops::Deref for Pin {
     type Target = sysfs_gpio::Pin;
 
