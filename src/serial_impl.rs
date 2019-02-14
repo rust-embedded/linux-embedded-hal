@@ -46,13 +46,21 @@ impl Write<u8> for Serial {
 
 #[cfg(test)]
 mod test {
+    use std::path::Path;
+
+    use hal::serial::Read;
+    use std::io::Write;
+
     use super::*;
 
     #[test]
     fn test_empty() {
-        let mut port: Box<Read<u8, Error = serial::Error>> =
-            Box::new(Serial(serial::open("/dev/tty1").unwrap()));
-
-        port.read().unwrap();
+        let (mut master, _slave, name) =
+            openpty::openpty(None, None, None).expect("Creating pty failed");
+        println!("{:?}", name);
+        let port = serial::open(Path::new(&name)).unwrap();
+        let mut serial = Serial(port);
+        master.write(&[1]).unwrap();
+        serial.read().unwrap();
     }
 }
