@@ -2,7 +2,7 @@
 
 > Implementation of the [`embedded-hal`] traits for Linux devices
 
-This project is developed and maintained by the [HAL team][team].
+This project is developed and maintained by the [Embedded Linux team][team].
 
 [`embedded-hal`]: https://crates.io/crates/embedded-hal
 
@@ -31,4 +31,4 @@ Conduct][CoC], the maintainer of this crate, the [HAL team][team], promises
 to intervene to uphold that code of conduct.
 
 [CoC]: CODE_OF_CONDUCT.md
-[team]: https://github.com/rust-embedded/wg#the-hal-team
+[team]: https://github.com/rust-embedded/wg/#the-embedded-linux-team
