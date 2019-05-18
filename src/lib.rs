@@ -17,7 +17,7 @@ extern crate embedded_hal as hal;
 pub extern crate i2cdev;
 pub extern crate spidev;
 pub extern crate sysfs_gpio;
-pub extern crate serial;
+pub extern crate serial_unix;
 pub extern crate nb;
 
 use std::io::{self, Write};
