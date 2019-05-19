@@ -29,7 +29,9 @@ use cast::{u32, u64};
 use i2cdev::core::I2CDevice;
 use spidev::SpidevTransfer;
 
-pub mod serial_impl;
+mod serial;
+
+pub use serial::Serial;
 
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
