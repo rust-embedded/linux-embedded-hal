@@ -11,7 +11,6 @@
 //! [0]: https://crates.io/keywords/embedded-hal
 
 #![deny(missing_docs)]
-#![deny(warnings)]
 
 extern crate cast;
 extern crate embedded_hal as hal;
