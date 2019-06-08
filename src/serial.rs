@@ -1,15 +1,24 @@
 //! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.1/embedded_hal/serial/index.html)
 
 use std::io::{ErrorKind as IoErrorKind, Read, Write};
+use std::path::Path;
 
 use nb;
 
 use hal;
+use serial_core;
 use serial_unix::TTYPort;
 
 /// Newtype around [`serial_unix::TTYPort`] that implements
 /// the `embedded-hal` traits.
 pub struct Serial(pub TTYPort);
+
+impl Serial {
+    /// Wrapper for `serial_unix::TTYPort::open`
+    pub fn open(path: &Path) -> Result<Serial, serial_core::Error> {
+        Ok(Serial(TTYPort::open(path)?))
+    }
+}
 
 /// Helper to convert std::io::Error to the nb::Error
 fn translate_io_errors(err: std::io::Error) -> nb::Error<IoErrorKind> {
@@ -60,8 +69,7 @@ mod test {
     fn create_pty_and_serial() -> (std::fs::File, Serial) {
         let (master, _slave, name) =
             openpty::openpty(None, None, None).expect("Creating pty failed");
-        let port = TTYPort::open(Path::new(&name)).expect("Creating TTYPort failed");
-        let serial = Serial(port);
+        let serial = Serial::open(Path::new(&name)).expect("Creating TTYPort failed");
         (master, serial)
     }
 

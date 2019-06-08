@@ -18,6 +18,7 @@ pub extern crate i2cdev;
 pub extern crate spidev;
 pub extern crate sysfs_gpio;
 pub extern crate serial_unix;
+pub extern crate serial_core;
 pub extern crate nb;
 
 use std::io::{self, Write};

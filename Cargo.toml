@@ -14,6 +14,7 @@ i2cdev = "0.4.1"
 spidev = "0.3.0"
 sysfs_gpio = "0.5.1"
 serial-unix = "0.4.0"
+serial-core = "0.4.0"
 nb = "0.1.1"
 
 [dev-dependencies]
