@@ -115,27 +115,31 @@ impl Pin {
     }
 }
 
-impl hal::digital::OutputPin for Pin {
-    fn set_low(&mut self) {
-        self.0.set_value(0).unwrap()
+impl hal::digital::v2::OutputPin for Pin {
+    type Error = sysfs_gpio::Error;
+
+    fn set_low(&mut self) -> Result<(), Self::Error> {
+        self.0.set_value(0)
     }
 
-    fn set_high(&mut self) {
-        self.0.set_value(1).unwrap()
+    fn set_high(&mut self) -> Result<(), Self::Error> {
+        self.0.set_value(1)
     }
 }
 
-impl hal::digital::InputPin for Pin {
-    fn is_high(&self) -> bool{
-        if !self.0.get_active_low().unwrap() {
-            self.0.get_value().unwrap() != 0
+impl hal::digital::v2::InputPin for Pin {
+    type Error = sysfs_gpio::Error;
+
+    fn is_high(&self) -> Result<bool, Self::Error> {
+        if !self.0.get_active_low()? {
+            self.0.get_value().map(|val| val != 0)
         } else {
-            self.0.get_value().unwrap() == 0
+            self.0.get_value().map(|val| val == 0)
         }
     }
 
-    fn is_low(&self) -> bool{
-        !self.is_high()
+    fn is_low(&self) -> Result<bool, Self::Error> {
+        self.is_high().map(|val| !val)
     }
 }
 
