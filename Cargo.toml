@@ -10,7 +10,7 @@ version = "0.2.2"
 
 [dependencies]
 embedded-hal = { version = "0.2.0", features = ["unproven"] }
-i2cdev = "0.4"
+i2cdev = "0.4.3"
 spidev = "0.4"
 sysfs_gpio = "0.5"
 serial-unix = "0.4.0"
