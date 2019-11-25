@@ -185,7 +185,7 @@ impl I2cdev {
 
     fn set_address(&mut self, address: u8) -> Result<(), i2cdev::linux::LinuxI2CError> {
         if self.address != Some(address) {
-            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, address as u16)?;
+            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, u16::from(address))?;
             self.address = Some(address);
         }
         Ok(())
