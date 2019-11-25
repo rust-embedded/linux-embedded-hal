@@ -6,10 +6,10 @@ keywords = ["Linux", "hal"]
 license = "MIT OR Apache-2.0"
 name = "linux-embedded-hal"
 repository = "https://github.com/japaric/linux-embedded-hal"
-version = "0.2.2"
+version = "0.2.3"
 
 [dependencies]
-embedded-hal = { version = "0.2.0", features = ["unproven"] }
+embedded-hal = { version = "0.2.3", features = ["unproven"] }
 i2cdev = "0.4.3"
 spidev = "0.4"
 sysfs_gpio = "0.5"
