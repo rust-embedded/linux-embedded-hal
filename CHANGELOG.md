@@ -7,13 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.0] - 2019-11-25
+
+### Added
+
+- Added serial::Read/Write implementation.
+
 ### Fixed
 
 - Do write and read in one transaction in WriteRead implementation.
+- Removed #[deny(warnings)]
 
 ### Changed
 
-- updated to i2cdev 0.4.3 (necessary for trasactional write-read).
+- Use embedded-hal::digital::v2 traits.
+- Updated to i2cdev 0.4.3 (necessary for trasactional write-read).
+- Updated to spidev 0.4
 
 ## [v0.2.2] - 2018-12-21
 
