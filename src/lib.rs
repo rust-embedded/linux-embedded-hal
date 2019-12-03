@@ -27,7 +27,8 @@ use std::time::Duration;
 use std::{ops, thread};
 
 use cast::{u32, u64};
-use i2cdev::core::I2CDevice;
+use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
+use i2cdev::linux::LinuxI2CMessage;
 use spidev::SpidevTransfer;
 
 mod serial;
@@ -184,7 +185,7 @@ impl I2cdev {
 
     fn set_address(&mut self, address: u8) -> Result<(), i2cdev::linux::LinuxI2CError> {
         if self.address != Some(address) {
-            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, address as u16)?;
+            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, u16::from(address))?;
             self.address = Some(address);
         }
         Ok(())
@@ -219,8 +220,11 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
         buffer: &mut [u8],
     ) -> Result<(), Self::Error> {
         self.set_address(address)?;
-        self.inner.write(bytes)?;
-        self.inner.read(buffer)
+        let mut messages = [
+            LinuxI2CMessage::write(bytes),
+            LinuxI2CMessage::read(buffer),
+        ];
+        self.inner.transfer(&mut messages).map(drop)
     }
 }
 

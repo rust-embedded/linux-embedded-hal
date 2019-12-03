@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Do write and read in one transaction in WriteRead implementation.
+
+### Changed
+
+- updated to i2cdev 0.4.3 (necessary for trasactional write-read).
+
 ## [v0.2.2] - 2018-12-21
 
 ### Changed
