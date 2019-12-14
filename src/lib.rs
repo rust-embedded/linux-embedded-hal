@@ -14,11 +14,14 @@
 
 extern crate cast;
 extern crate embedded_hal as hal;
+#[cfg(feature = "gpio_cdev")]
+pub extern crate gpio_cdev;
 pub extern crate i2cdev;
 pub extern crate nb;
 pub extern crate serial_core;
 pub extern crate serial_unix;
 pub extern crate spidev;
+#[cfg(not(feature = "gpio_cdev"))]
 pub extern crate sysfs_gpio;
 
 use std::io::{self, Write};
@@ -92,11 +95,30 @@ impl hal::blocking::delay::DelayMs<u64> for Delay {
     }
 }
 
+/// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
+///
+/// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.2.0/gpio_cdev/struct.LineHandle.html
+#[cfg(feature = "gpio_cdev")]
+pub struct Pin(pub gpio_cdev::LineHandle, bool);
+
+#[cfg(feature = "gpio_cdev")]
+impl Pin {
+    /// See [`gpio_cdev::Line::request`][0] for details.
+    ///
+    /// [0]: https://docs.rs/gpio-cdev/0.2.0/gpio_cdev/struct.Line.html#method.request
+    pub fn new(handle: gpio_cdev::LineHandle) -> Result<Pin, gpio_cdev::errors::Error> {
+        let info = handle.line().info()?;
+        Ok(Pin(handle, info.is_active_low()))
+    }
+}
+
 /// Newtype around [`sysfs_gpio::Pin`] that implements the `embedded-hal` traits
 ///
 /// [`sysfs_gpio::Pin`]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html
+#[cfg(not(feature = "gpio_cdev"))]
 pub struct Pin(pub sysfs_gpio::Pin);
 
+#[cfg(not(feature = "gpio_cdev"))]
 impl Pin {
     /// See [`sysfs_gpio::Pin::new`][0] for details.
     ///
@@ -117,6 +139,9 @@ impl Pin {
 }
 
 impl hal::digital::v2::OutputPin for Pin {
+    #[cfg(feature = "gpio_cdev")]
+    type Error = gpio_cdev::errors::Error;
+    #[cfg(not(feature = "gpio_cdev"))]
     type Error = sysfs_gpio::Error;
 
     fn set_low(&mut self) -> Result<(), Self::Error> {
@@ -129,8 +154,20 @@ impl hal::digital::v2::OutputPin for Pin {
 }
 
 impl hal::digital::v2::InputPin for Pin {
+    #[cfg(feature = "gpio_cdev")]
+    type Error = gpio_cdev::errors::Error;
+    #[cfg(not(feature = "gpio_cdev"))]
     type Error = sysfs_gpio::Error;
 
+    #[cfg(feature = "gpio_cdev")]
+    fn is_high(&self) -> Result<bool, Self::Error> {
+        if !self.1 {
+            self.0.get_value().map(|val| val != 0)
+        } else {
+            self.0.get_value().map(|val| val == 0)
+        }
+    }
+    #[cfg(not(feature = "gpio_cdev"))]
     fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low()? {
             self.0.get_value().map(|val| val != 0)
@@ -145,6 +182,9 @@ impl hal::digital::v2::InputPin for Pin {
 }
 
 impl ops::Deref for Pin {
+    #[cfg(feature = "gpio_cdev")]
+    type Target = gpio_cdev::LineHandle;
+    #[cfg(not(feature = "gpio_cdev"))]
     type Target = sysfs_gpio::Pin;
 
     fn deref(&self) -> &Self::Target {
