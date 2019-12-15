@@ -8,6 +8,17 @@ This project is developed and maintained by the [Embedded Linux team][team].
 
 ## [Documentation](https://docs.rs/linux-embedded-hal)
 
+## GPIO character device
+
+Since Linux kernel v4.4 the use of sysfs GPIO was deprecated and replaced by the character device GPIO.
+See [gpio-cdev documentation](https://github.com/rust-embedded/gpio-cdev#sysfs-gpio-vs-gpio-character-device) for details.
+
+This crate includes feature flag `gpio_cdev` that replaces [sysfs_gpio](https://crates.io/crates/sysfs_gpio) by [gpio-cdev](https://crates.io/crates/gpio-cdev).
+To enable it update your Cargo.toml. 
+```
+linux-embedded-hal = { version = "0.3", features = ["gpio_cdev"] }
+``` 
+
 ## License
 
 Licensed under either of

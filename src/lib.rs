@@ -11,6 +11,7 @@
 //! [0]: https://crates.io/keywords/embedded-hal
 
 #![deny(missing_docs)]
+#![feature(doc_cfg)]
 
 extern crate cast;
 extern crate embedded_hal as hal;
@@ -99,9 +100,11 @@ impl hal::blocking::delay::DelayMs<u64> for Delay {
 ///
 /// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.2.0/gpio_cdev/struct.LineHandle.html
 #[cfg(feature = "gpio_cdev")]
+#[doc(cfg(feature = "gpio_cdev"))]
 pub struct Pin(pub gpio_cdev::LineHandle, bool);
 
 #[cfg(feature = "gpio_cdev")]
+#[doc(cfg(feature = "gpio_cdev"))]
 impl Pin {
     /// See [`gpio_cdev::Line::request`][0] for details.
     ///
