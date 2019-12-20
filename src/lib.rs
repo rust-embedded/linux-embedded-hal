@@ -13,7 +13,10 @@
 #![deny(missing_docs)]
 
 extern crate cast;
+extern crate core;
 extern crate embedded_hal as hal;
+#[cfg(feature = "gpio_cdev")]
+pub extern crate gpio_cdev;
 pub extern crate i2cdev;
 pub extern crate nb;
 pub extern crate serial_core;
@@ -34,10 +37,15 @@ use spidev::SpidevTransfer;
 
 mod serial;
 
+#[cfg(feature = "gpio_cdev")]
+/// Cdev Pin wrapper module
+mod cdev_pin;
 #[cfg(feature = "gpio_sysfs")]
 /// Sysfs Pin wrapper module
 mod sysfs_pin;
 
+#[cfg(feature = "gpio_cdev")]
+pub use cdev_pin::CdevPin;
 pub use serial::Serial;
 #[cfg(feature = "gpio_sysfs")]
 pub use sysfs_pin::SysfsPin;
