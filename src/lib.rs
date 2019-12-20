@@ -15,11 +15,11 @@
 extern crate cast;
 extern crate embedded_hal as hal;
 pub extern crate i2cdev;
+pub extern crate nb;
+pub extern crate serial_core;
+pub extern crate serial_unix;
 pub extern crate spidev;
 pub extern crate sysfs_gpio;
-pub extern crate serial_unix;
-pub extern crate serial_core;
-pub extern crate nb;
 
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -220,10 +220,7 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
         buffer: &mut [u8],
     ) -> Result<(), Self::Error> {
         self.set_address(address)?;
-        let mut messages = [
-            LinuxI2CMessage::write(bytes),
-            LinuxI2CMessage::read(buffer),
-        ];
+        let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
         self.inner.transfer(&mut messages).map(drop)
     }
 }
