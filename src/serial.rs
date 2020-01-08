@@ -15,8 +15,8 @@ pub struct Serial(pub TTYPort);
 
 impl Serial {
     /// Wrapper for `serial_unix::TTYPort::open`
-    pub fn open(path: &Path) -> Result<Serial, serial_core::Error> {
-        Ok(Serial(TTYPort::open(path)?))
+    pub fn open(path: impl AsRef<Path>) -> Result<Serial, serial_core::Error> {
+        Ok(Serial(TTYPort::open(path.as_ref())?))
     }
 }
 
