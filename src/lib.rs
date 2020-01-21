@@ -228,19 +228,19 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
     }
 }
 
-pub use hal::blocking::i2c::{Transaction as I2cTransaction};
+pub use hal::blocking::i2c::{Operation as I2cOperation};
 
 impl hal::blocking::i2c::Transactional for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn exec<'a, T>(&mut self, address: u8, mut transactions: T) -> Result<(), Self::Error>
-        where T: AsMut<[I2cTransaction<'a>]> {
+    fn exec<'a, O>(&mut self, address: u8, mut operations: O) -> Result<(), Self::Error>
+        where O: AsMut<[I2cOperation<'a>]> {
 
-        // Map types from generic to linux objects
-        let mut messages: Vec<_> = transactions.as_mut().iter_mut().map(|a| {
+        // Map operations from generic to linux objects
+        let mut messages: Vec<_> = operations.as_mut().iter_mut().map(|a| {
             match a {
-                I2cTransaction::Write(w) => LinuxI2CMessage::write(w),
-                I2cTransaction::Read(r) => LinuxI2CMessage::read(r),
+                I2cOperation::Write(w) => LinuxI2CMessage::write(w),
+                I2cOperation::Read(r) => LinuxI2CMessage::read(r),
             }
         }).collect();
 
@@ -299,19 +299,19 @@ impl hal::blocking::spi::Write<u8> for Spidev {
     }
 }
 
-pub use hal::blocking::spi::{Transaction as SpiTransaction};
+pub use hal::blocking::spi::{Operation as SpiOperation};
 
 impl hal::blocking::spi::Transactional for Spidev {
     type Error = io::Error;
 
-    fn exec<'a, T>(&mut self, mut transactions: T) -> Result<(), Self::Error>
-        where T: AsMut<[SpiTransaction<'a>]> {
+    fn exec<'a, O>(&mut self, mut operations: O) -> Result<(), Self::Error>
+        where O: AsMut<[SpiOperation<'a>]> {
 
         // Map types from generic to linux objects
-        let mut messages: Vec<_> = transactions.as_mut().iter_mut().map(|a| {
+        let mut messages: Vec<_> = operations.as_mut().iter_mut().map(|a| {
             match a {
-                SpiTransaction::Write(w) => SpidevTransfer::write(w),
-                SpiTransaction::WriteRead(w, r) => SpidevTransfer::read_write(w, r),
+                SpiOperation::Write(w) => SpidevTransfer::write(w),
+                SpiOperation::WriteRead(w, r) => SpidevTransfer::read_write(w, r),
             }
         }).collect();
 
