@@ -228,6 +228,27 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
     }
 }
 
+use hal::blocking::i2c::{Actions as I2cActions};
+
+impl hal::blocking::i2c::Transactional for I2cdev {
+    type Error = i2cdev::linux::LinuxI2CError;
+
+    fn exec<'a, A>(&mut self, address: u8, mut actions: A) -> Result<(), Self::Error>
+        where A: AsMut<[I2cActions<'a>]> {
+
+        // Map types from generic to linux objects
+        let mut messages: Vec<_> = actions.as_mut().iter_mut().map(|a| {
+            match a {
+                I2cActions::Write(w) => LinuxI2CMessage::write(w),
+                I2cActions::Read(r) => LinuxI2CMessage::read(r),
+            }
+        }).collect();
+
+        self.set_address(address)?;
+        self.inner.transfer(&mut messages).map(drop)
+    }
+}
+
 impl ops::Deref for I2cdev {
     type Target = i2cdev::linux::LinuxI2CDevice;
 
@@ -275,6 +296,29 @@ impl hal::blocking::spi::Write<u8> for Spidev {
 
     fn write(&mut self, buffer: &[u8]) -> io::Result<()> {
         self.0.write_all(buffer)
+    }
+}
+
+use hal::blocking::spi::{Actions as SpiActions};
+
+impl hal::blocking::spi::Transactional for Spidev {
+    type Error = io::Error;
+
+    fn exec<'a, A>(&mut self, mut actions: A) -> Result<(), Self::Error> 
+        where A: AsMut<[SpiActions<'a>]> {
+
+        // Map types from generic to linux objects
+        let mut messages: Vec<_> = actions.as_mut().iter_mut().map(|a| {
+            match a {
+                SpiActions::Write(w) => SpidevTransfer::write(w),
+                SpiActions::WriteRead(w, r) => SpidevTransfer::read_write(w, r),
+            }
+        }).collect();
+
+        // Execute transfer
+        self.0.transfer_multiple(&mut messages)?;
+
+        Ok(())
     }
 }
 
