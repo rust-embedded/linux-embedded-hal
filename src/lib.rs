@@ -301,11 +301,11 @@ impl hal::blocking::spi::Write<u8> for Spidev {
 
 pub use hal::blocking::spi::{Operation as SpiOperation};
 
-impl hal::blocking::spi::Transactional for Spidev {
+impl hal::blocking::spi::Transactional<u8> for Spidev {
     type Error = io::Error;
 
     fn exec<'a, O>(&mut self, mut operations: O) -> Result<(), Self::Error>
-        where O: AsMut<[SpiOperation<'a>]> {
+        where O: AsMut<[SpiOperation<'a, u8>]> {
 
         // Map types from generic to linux objects
         let mut messages: Vec<_> = operations.as_mut().iter_mut().map(|a| {
