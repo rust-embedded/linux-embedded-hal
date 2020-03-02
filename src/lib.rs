@@ -13,13 +13,17 @@
 #![deny(missing_docs)]
 
 extern crate cast;
+extern crate core;
 extern crate embedded_hal as hal;
+#[cfg(feature = "gpio_cdev")]
+pub extern crate gpio_cdev;
 pub extern crate i2cdev;
-pub extern crate spidev;
-pub extern crate sysfs_gpio;
-pub extern crate serial_unix;
-pub extern crate serial_core;
 pub extern crate nb;
+pub extern crate serial_core;
+pub extern crate serial_unix;
+pub extern crate spidev;
+#[cfg(feature = "gpio_sysfs")]
+pub extern crate sysfs_gpio;
 
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -33,7 +37,18 @@ use spidev::SpidevTransfer;
 
 mod serial;
 
+#[cfg(feature = "gpio_cdev")]
+/// Cdev Pin wrapper module
+mod cdev_pin;
+#[cfg(feature = "gpio_sysfs")]
+/// Sysfs Pin wrapper module
+mod sysfs_pin;
+
+#[cfg(feature = "gpio_cdev")]
+pub use cdev_pin::CdevPin;
 pub use serial::Serial;
+#[cfg(feature = "gpio_sysfs")]
+pub use sysfs_pin::SysfsPin;
 
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
@@ -89,72 +104,6 @@ impl hal::blocking::delay::DelayMs<u32> for Delay {
 impl hal::blocking::delay::DelayMs<u64> for Delay {
     fn delay_ms(&mut self, n: u64) {
         thread::sleep(Duration::from_millis(n))
-    }
-}
-
-/// Newtype around [`sysfs_gpio::Pin`] that implements the `embedded-hal` traits
-///
-/// [`sysfs_gpio::Pin`]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html
-pub struct Pin(pub sysfs_gpio::Pin);
-
-impl Pin {
-    /// See [`sysfs_gpio::Pin::new`][0] for details.
-    ///
-    /// [0]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html#method.new
-    pub fn new(pin_num: u64) -> Pin {
-        Pin(sysfs_gpio::Pin::new(pin_num))
-    }
-
-    /// See [`sysfs_gpio::Pin::from_path`][0] for details.
-    ///
-    /// [0]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html#method.from_path
-    pub fn from_path<P>(path: P) -> sysfs_gpio::Result<Pin>
-    where
-        P: AsRef<Path>,
-    {
-        sysfs_gpio::Pin::from_path(path).map(Pin)
-    }
-}
-
-impl hal::digital::v2::OutputPin for Pin {
-    type Error = sysfs_gpio::Error;
-
-    fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(0)
-    }
-
-    fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(1)
-    }
-}
-
-impl hal::digital::v2::InputPin for Pin {
-    type Error = sysfs_gpio::Error;
-
-    fn is_high(&self) -> Result<bool, Self::Error> {
-        if !self.0.get_active_low()? {
-            self.0.get_value().map(|val| val != 0)
-        } else {
-            self.0.get_value().map(|val| val == 0)
-        }
-    }
-
-    fn is_low(&self) -> Result<bool, Self::Error> {
-        self.is_high().map(|val| !val)
-    }
-}
-
-impl ops::Deref for Pin {
-    type Target = sysfs_gpio::Pin;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl ops::DerefMut for Pin {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
@@ -220,10 +169,7 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
         buffer: &mut [u8],
     ) -> Result<(), Self::Error> {
         self.set_address(address)?;
-        let mut messages = [
-            LinuxI2CMessage::write(bytes),
-            LinuxI2CMessage::read(buffer),
-        ];
+        let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
         self.inner.transfer(&mut messages).map(drop)
     }
 }

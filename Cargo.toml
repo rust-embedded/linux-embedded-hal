@@ -8,11 +8,18 @@ name = "linux-embedded-hal"
 repository = "https://github.com/japaric/linux-embedded-hal"
 version = "0.3.0"
 
+[features]
+default = []
+gpio_sysfs = ["sysfs_gpio"]
+gpio_cdev = ["gpio-cdev"]
+
 [dependencies]
 embedded-hal = { version = "0.2.3", features = ["unproven"] }
+gpio-cdev = { version = "0.2", optional = true }
+sysfs_gpio = { version = "0.5", optional = true }
+
 i2cdev = "0.4.3"
 spidev = "0.4"
-sysfs_gpio = "0.5"
 serial-unix = "0.4.0"
 serial-core = "0.4.0"
 nb = "0.1.1"

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Added serial::Read/Write implementation.
+- Added feature flag for Chardev GPIO
 
 ### Fixed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use embedded-hal::digital::v2 traits.
 - Updated to i2cdev 0.4.3 (necessary for trasactional write-read).
 - Updated to spidev 0.4
+- Added feature flag for Sysfs GPIO
 
 ## [v0.2.2] - 2018-12-21
 

@@ -8,6 +8,20 @@ This project is developed and maintained by the [Embedded Linux team][team].
 
 ## [Documentation](https://docs.rs/linux-embedded-hal)
 
+## GPIO character device
+
+Since Linux kernel v4.4 the use of sysfs GPIO was deprecated and replaced by the character device GPIO.
+See [gpio-cdev documentation](https://github.com/rust-embedded/gpio-cdev#sysfs-gpio-vs-gpio-character-device) for details.
+
+This crate includes feature flag `gpio_cdev` that exposes `CdevPin` as wrapper around `LineHandle` from [gpio-cdev](https://crates.io/crates/gpio-cdev).
+To enable it update your Cargo.toml. Please note that in order to prevent `LineHandle` fd from closing you should
+assign to a variable, see [cdev issue](https://github.com/rust-embedded/gpio-cdev/issues/29) for more details.  
+```
+linux-embedded-hal = { version = "0.3", features = ["gpio_cdev"] }
+``` 
+
+`SysfsPin` can be still used with feature flag `gpio_sysfs`.
+
 ## License
 
 Licensed under either of
