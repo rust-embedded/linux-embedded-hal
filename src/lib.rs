@@ -311,7 +311,17 @@ impl hal::blocking::spi::Transactional<u8> for Spidev {
         let mut messages: Vec<_> = operations.as_mut().iter_mut().map(|a| {
             match a {
                 SpiOperation::Write(w) => SpidevTransfer::write(w),
-                SpiOperation::WriteRead(w, r) => SpidevTransfer::read_write(w, r),
+                SpiOperation::WriteRead(r) => {
+                    // TODO: is spidev okay with the same array pointer
+                    // being used twice? If not, need some kind of vector 
+                    // pool that will outlive the transfer
+                    let w = unsafe {
+                        let p = r.as_ptr();
+                        std::slice::from_raw_parts(p, r.len())
+                    };
+
+                    SpidevTransfer::read_write(w, r)
+                },
             }
         }).collect();
 
