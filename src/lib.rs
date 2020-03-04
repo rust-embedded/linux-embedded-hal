@@ -304,11 +304,10 @@ pub use hal::blocking::spi::{Operation as SpiOperation};
 impl hal::blocking::spi::Transactional<u8> for Spidev {
     type Error = io::Error;
 
-    fn exec<'a, O>(&mut self, mut operations: O) -> Result<(), Self::Error>
-        where O: AsMut<[SpiOperation<'a, u8>]> {
+    fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
 
         // Map types from generic to linux objects
-        let mut messages: Vec<_> = operations.as_mut().iter_mut().map(|a| {
+        let mut messages: Vec<_> = operations.iter_mut().map(|a| {
             match a {
                 SpiOperation::Write(w) => SpidevTransfer::write(w),
                 SpiOperation::WriteRead(r) => {
