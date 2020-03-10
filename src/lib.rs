@@ -13,7 +13,6 @@
 #![deny(missing_docs)]
 
 extern crate cast;
-extern crate core;
 extern crate embedded_hal as hal;
 pub extern crate i2cdev;
 pub extern crate nb;
@@ -202,7 +201,10 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
         buffer: &mut [u8],
     ) -> Result<(), Self::Error> {
         self.set_address(address)?;
-        let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
+        let mut messages = [
+            LinuxI2CMessage::write(bytes),
+            LinuxI2CMessage::read(buffer),
+        ];
         self.inner.transfer(&mut messages).map(drop)
     }
 }
@@ -254,6 +256,40 @@ impl hal::blocking::spi::Write<u8> for Spidev {
 
     fn try_write(&mut self, buffer: &[u8]) -> io::Result<()> {
         self.0.write_all(buffer)
+    }
+}
+
+#[cfg(feature = "transactional-spi")]
+pub use hal::blocking::spi::{Operation as SpiOperation};
+
+#[cfg(feature = "transactional-spi")]
+impl hal::blocking::spi::Transactional<u8> for Spidev {
+    type Error = io::Error;
+
+    fn try_exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
+
+        // Map types from generic to linux objects
+        let mut messages: Vec<_> = operations.iter_mut().map(|a| {
+            match a {
+                SpiOperation::Write(w) => SpidevTransfer::write(w),
+                SpiOperation::Transfer(r) => {
+                    // TODO: is spidev okay with the same array pointer
+                    // being used twice? If not, need some kind of vector 
+                    // pool that will outlive the transfer
+                    let w = unsafe {
+                        let p = r.as_ptr();
+                        std::slice::from_raw_parts(p, r.len())
+                    };
+
+                    SpidevTransfer::read_write(w, r)
+                },
+            }
+        }).collect();
+
+        // Execute transfer
+        self.0.transfer_multiple(&mut messages)?;
+
+        Ok(())
     }
 }
 
