@@ -1,4 +1,4 @@
-use core::ops;
+//! Linux CDev pin type
 
 /// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
 ///
@@ -43,7 +43,7 @@ impl hal::digital::v2::InputPin for CdevPin {
     }
 }
 
-impl ops::Deref for CdevPin {
+impl core::ops::Deref for CdevPin {
     type Target = gpio_cdev::LineHandle;
 
     fn deref(&self) -> &Self::Target {
@@ -51,7 +51,7 @@ impl ops::Deref for CdevPin {
     }
 }
 
-impl ops::DerefMut for CdevPin {
+impl core::ops::DerefMut for CdevPin {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }

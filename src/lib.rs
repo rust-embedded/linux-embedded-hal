@@ -15,15 +15,19 @@
 extern crate cast;
 extern crate core;
 extern crate embedded_hal as hal;
-#[cfg(feature = "gpio_cdev")]
-pub extern crate gpio_cdev;
 pub extern crate i2cdev;
-pub extern crate nb;
-pub extern crate serial_core;
-pub extern crate serial_unix;
 pub extern crate spidev;
+pub extern crate serial_unix;
+pub extern crate serial_core;
+pub extern crate nb;
+
+
 #[cfg(feature = "gpio_sysfs")]
 pub extern crate sysfs_gpio;
+
+#[cfg(feature = "gpio_cdev")]
+pub extern crate gpio_cdev;
+
 
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -37,18 +41,23 @@ use spidev::SpidevTransfer;
 
 mod serial;
 
-#[cfg(feature = "gpio_cdev")]
-/// Cdev Pin wrapper module
-mod cdev_pin;
+pub use serial::Serial;
+
 #[cfg(feature = "gpio_sysfs")]
 /// Sysfs Pin wrapper module
 mod sysfs_pin;
 
 #[cfg(feature = "gpio_cdev")]
+/// Cdev Pin wrapper module
+mod cdev_pin;
+
+#[cfg(feature = "gpio_cdev")]
+/// Cdev pin re-export
 pub use cdev_pin::CdevPin;
-pub use serial::Serial;
 #[cfg(feature = "gpio_sysfs")]
+/// Sysfs pin re-export
 pub use sysfs_pin::SysfsPin;
+
 
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
@@ -106,6 +115,22 @@ impl hal::blocking::delay::DelayMs<u64> for Delay {
         thread::sleep(Duration::from_millis(n))
     }
 }
+
+
+#[cfg(all(feature = "gpio_sysfs", feature = "gpio_cdev"))]
+/// Re-export of `sysfs_pin::SysfsPin` when both pin types are enabled
+/// This exists to maintain backwards compatibility with existing users
+pub type Pin = sysfs_pin::SysfsPin;
+
+#[cfg(all(feature = "gpio_sysfs", not(feature = "gpio_cdev")))]
+/// Re-export of `sysfs_pin::SysfsPin` pin type when `gpio_sysfs` feature is selected
+pub type Pin = sysfs_pin::SysfsPin;
+
+#[cfg(all(feature = "gpio_cdev", not(feature = "gpio_sysfs")))]
+/// Re-export of `cdev_pin::CdevPin` pin type when `gpio_cdev` feature is selected
+pub type Pin = cdev_pin::CdevPin;
+
+
 
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///

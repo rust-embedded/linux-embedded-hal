@@ -9,9 +9,10 @@ repository = "https://github.com/japaric/linux-embedded-hal"
 version = "0.3.0"
 
 [features]
-default = []
 gpio_sysfs = ["sysfs_gpio"]
 gpio_cdev = ["gpio-cdev"]
+
+default = [ "gpio_cdev", "gpio_sysfs" ]
 
 [dependencies]
 embedded-hal = { version = "0.2.3", features = ["unproven"] }
