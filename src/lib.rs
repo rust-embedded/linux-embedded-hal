@@ -117,21 +117,6 @@ impl hal::blocking::delay::DelayMs<u64> for Delay {
 }
 
 
-#[cfg(all(feature = "gpio_sysfs", feature = "gpio_cdev"))]
-/// Re-export of `sysfs_pin::SysfsPin` when both pin types are enabled
-/// This exists to maintain backwards compatibility with existing users
-pub type Pin = sysfs_pin::SysfsPin;
-
-#[cfg(all(feature = "gpio_sysfs", not(feature = "gpio_cdev")))]
-/// Re-export of `sysfs_pin::SysfsPin` pin type when `gpio_sysfs` feature is selected
-pub type Pin = sysfs_pin::SysfsPin;
-
-#[cfg(all(feature = "gpio_cdev", not(feature = "gpio_sysfs")))]
-/// Re-export of `cdev_pin::CdevPin` pin type when `gpio_cdev` feature is selected
-pub type Pin = cdev_pin::CdevPin;
-
-
-
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
 /// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html
