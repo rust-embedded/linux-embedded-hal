@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Set default features to build both sysfs and cdev pin types
+- Removed `Pin` export, use `CdevPin` or `SysfsPin`
+
 ## [v0.3.0] - 2019-11-25
 
 ### Added

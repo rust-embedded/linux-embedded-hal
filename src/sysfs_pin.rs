@@ -1,4 +1,5 @@
-use std::ops;
+//! Linux Sysfs pin type
+
 use std::path::Path;
 
 /// Newtype around [`sysfs_gpio::Pin`] that implements the `embedded-hal` traits
@@ -53,7 +54,7 @@ impl hal::digital::v2::InputPin for SysfsPin {
     }
 }
 
-impl ops::Deref for SysfsPin {
+impl core::ops::Deref for SysfsPin {
     type Target = sysfs_gpio::Pin;
 
     fn deref(&self) -> &Self::Target {
@@ -61,7 +62,7 @@ impl ops::Deref for SysfsPin {
     }
 }
 
-impl ops::DerefMut for SysfsPin {
+impl core::ops::DerefMut for SysfsPin {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
