@@ -40,8 +40,10 @@ use i2cdev::linux::LinuxI2CMessage;
 use spidev::SpidevTransfer;
 
 mod serial;
+mod timer;
 
 pub use serial::Serial;
+pub use timer::SysTimer;
 
 #[cfg(feature = "gpio_sysfs")]
 /// Sysfs Pin wrapper module
