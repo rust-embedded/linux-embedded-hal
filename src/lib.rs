@@ -200,13 +200,13 @@ impl ops::DerefMut for I2cdev {
 
 /// Newtype around [`spidev::Spidev`] that implements the `embedded-hal` traits
 ///
-/// [`spidev::Spidev`]: https://docs.rs/spidev/0.3.0/spidev/struct.Spidev.html
+/// [`spidev::Spidev`]: https://docs.rs/spidev/0.4.0/spidev/struct.Spidev.html
 pub struct Spidev(pub spidev::Spidev);
 
 impl Spidev {
     /// See [`spidev::Spidev::open`][0] for details.
     ///
-    /// [0]: https://docs.rs/spidev/0.3.0/spidev/struct.Spidev.html#method.open
+    /// [0]: https://docs.rs/spidev/0.4.0/spidev/struct.Spidev.html#method.open
     pub fn open<P>(path: P) -> io::Result<Self>
     where
         P: AsRef<Path>,
