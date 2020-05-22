@@ -15,12 +15,17 @@ See [gpio-cdev documentation](https://github.com/rust-embedded/gpio-cdev#sysfs-g
 
 This crate includes feature flag `gpio_cdev` that exposes `CdevPin` as wrapper around `LineHandle` from [gpio-cdev](https://crates.io/crates/gpio-cdev).
 To enable it update your Cargo.toml. Please note that in order to prevent `LineHandle` fd from closing you should
-assign to a variable, see [cdev issue](https://github.com/rust-embedded/gpio-cdev/issues/29) for more details.  
+assign to a variable, see [cdev issue](https://github.com/rust-embedded/gpio-cdev/issues/29) for more details.
 ```
 linux-embedded-hal = { version = "0.3", features = ["gpio_cdev"] }
-``` 
+```
 
 `SysfsPin` can be still used with feature flag `gpio_sysfs`.
+
+# Minimum Supported Rust Version (MSRV)
+
+This crate is guaranteed to compile on stable Rust 1.40.0 and up. It *might*
+compile with older versions but that may change in any new patch release.
 
 ## License
 
