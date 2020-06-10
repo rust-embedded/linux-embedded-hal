@@ -16,7 +16,7 @@ default = [ "gpio_cdev", "gpio_sysfs" ]
 
 [dependencies]
 embedded-hal = { version = "0.2.3", features = ["unproven"] }
-gpio-cdev = { version = "0.2", optional = true }
+gpio-cdev = { version = "0.3", optional = true }
 sysfs_gpio = { version = "0.5", optional = true }
 
 i2cdev = "0.4.3"
