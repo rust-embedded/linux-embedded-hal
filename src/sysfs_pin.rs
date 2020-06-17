@@ -26,22 +26,22 @@ impl SysfsPin {
     }
 }
 
-impl hal::digital::v2::OutputPin for SysfsPin {
+impl hal::digital::OutputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
-    fn set_low(&mut self) -> Result<(), Self::Error> {
+    fn try_set_low(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(0)
     }
 
-    fn set_high(&mut self) -> Result<(), Self::Error> {
+    fn try_set_high(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(1)
     }
 }
 
-impl hal::digital::v2::InputPin for SysfsPin {
+impl hal::digital::InputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
-    fn is_high(&self) -> Result<bool, Self::Error> {
+    fn try_is_high(&self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low()? {
             self.0.get_value().map(|val| val != 0)
         } else {
@@ -49,8 +49,8 @@ impl hal::digital::v2::InputPin for SysfsPin {
         }
     }
 
-    fn is_low(&self) -> Result<bool, Self::Error> {
-        self.is_high().map(|val| !val)
+    fn try_is_low(&self) -> Result<bool, Self::Error> {
+        self.try_is_high().map(|val| !val)
     }
 }
 

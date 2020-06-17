@@ -16,11 +16,10 @@ extern crate cast;
 extern crate core;
 extern crate embedded_hal as hal;
 pub extern crate i2cdev;
-pub extern crate spidev;
-pub extern crate serial_unix;
-pub extern crate serial_core;
 pub extern crate nb;
-
+pub extern crate serial_core;
+pub extern crate serial_unix;
+pub extern crate spidev;
 
 #[cfg(feature = "gpio_sysfs")]
 pub extern crate sysfs_gpio;
@@ -28,7 +27,7 @@ pub extern crate sysfs_gpio;
 #[cfg(feature = "gpio_cdev")]
 pub extern crate gpio_cdev;
 
-
+use core::convert::Infallible;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -60,64 +59,86 @@ pub use cdev_pin::CdevPin;
 /// Sysfs pin re-export
 pub use sysfs_pin::SysfsPin;
 
-
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
 
 impl hal::blocking::delay::DelayUs<u8> for Delay {
-    fn delay_us(&mut self, n: u8) {
-        thread::sleep(Duration::new(0, u32(n) * 1000))
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, n: u8) -> Result<(), Self::Error> {
+        thread::sleep(Duration::new(0, u32(n) * 1000));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayUs<u16> for Delay {
-    fn delay_us(&mut self, n: u16) {
-        thread::sleep(Duration::new(0, u32(n) * 1000))
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, n: u16) -> Result<(), Self::Error> {
+        thread::sleep(Duration::new(0, u32(n) * 1000));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayUs<u32> for Delay {
-    fn delay_us(&mut self, n: u32) {
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, n: u32) -> Result<(), Self::Error> {
         let secs = n / 1_000_000;
         let nsecs = (n % 1_000_000) * 1_000;
 
-        thread::sleep(Duration::new(u64(secs), nsecs))
+        thread::sleep(Duration::new(u64(secs), nsecs));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayUs<u64> for Delay {
-    fn delay_us(&mut self, n: u64) {
+    type Error = Infallible;
+
+    fn try_delay_us(&mut self, n: u64) -> Result<(), Self::Error> {
         let secs = n / 1_000_000;
         let nsecs = ((n % 1_000_000) * 1_000) as u32;
 
-        thread::sleep(Duration::new(secs, nsecs))
+        thread::sleep(Duration::new(secs, nsecs));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayMs<u8> for Delay {
-    fn delay_ms(&mut self, n: u8) {
-        thread::sleep(Duration::from_millis(u64(n)))
+    type Error = Infallible;
+
+    fn try_delay_ms(&mut self, n: u8) -> Result<(), Self::Error> {
+        thread::sleep(Duration::from_millis(u64(n)));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayMs<u16> for Delay {
-    fn delay_ms(&mut self, n: u16) {
-        thread::sleep(Duration::from_millis(u64(n)))
+    type Error = Infallible;
+
+    fn try_delay_ms(&mut self, n: u16) -> Result<(), Self::Error> {
+        thread::sleep(Duration::from_millis(u64(n)));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayMs<u32> for Delay {
-    fn delay_ms(&mut self, n: u32) {
-        thread::sleep(Duration::from_millis(u64(n)))
+    type Error = Infallible;
+
+    fn try_delay_ms(&mut self, n: u32) -> Result<(), Self::Error> {
+        thread::sleep(Duration::from_millis(u64(n)));
+        Ok(())
     }
 }
 
 impl hal::blocking::delay::DelayMs<u64> for Delay {
-    fn delay_ms(&mut self, n: u64) {
-        thread::sleep(Duration::from_millis(n))
+    type Error = Infallible;
+
+    fn try_delay_ms(&mut self, n: u64) -> Result<(), Self::Error> {
+        thread::sleep(Duration::from_millis(n));
+        Ok(())
     }
 }
-
 
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
@@ -156,7 +177,7 @@ impl I2cdev {
 impl hal::blocking::i2c::Read for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+    fn try_read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
         self.set_address(address)?;
         self.inner.read(buffer)
     }
@@ -165,7 +186,7 @@ impl hal::blocking::i2c::Read for I2cdev {
 impl hal::blocking::i2c::Write for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+    fn try_write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
         self.set_address(address)?;
         self.inner.write(bytes)
     }
@@ -174,7 +195,7 @@ impl hal::blocking::i2c::Write for I2cdev {
 impl hal::blocking::i2c::WriteRead for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn write_read(
+    fn try_write_read(
         &mut self,
         address: u8,
         bytes: &[u8],
@@ -220,7 +241,7 @@ impl Spidev {
 impl hal::blocking::spi::Transfer<u8> for Spidev {
     type Error = io::Error;
 
-    fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> io::Result<&'b [u8]> {
+    fn try_transfer<'b>(&mut self, buffer: &'b mut [u8]) -> io::Result<&'b [u8]> {
         let tx = buffer.to_owned();
         self.0
             .transfer(&mut SpidevTransfer::read_write(&tx, buffer))?;
@@ -231,7 +252,7 @@ impl hal::blocking::spi::Transfer<u8> for Spidev {
 impl hal::blocking::spi::Write<u8> for Spidev {
     type Error = io::Error;
 
-    fn write(&mut self, buffer: &[u8]) -> io::Result<()> {
+    fn try_write(&mut self, buffer: &[u8]) -> io::Result<()> {
         self.0.write_all(buffer)
     }
 }
