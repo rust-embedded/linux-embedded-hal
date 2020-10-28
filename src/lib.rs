@@ -259,10 +259,9 @@ impl hal::blocking::spi::Write<u8> for Spidev {
     }
 }
 
-#[cfg(feature = "transactional-spi")]
 pub use hal::blocking::spi::{Operation as SpiOperation};
 
-#[cfg(feature = "transactional-spi")]
+/// Transactional implementation batches SPI operations into a single transaction
 impl hal::blocking::spi::Transactional<u8> for Spidev {
     type Error = io::Error;
 
@@ -273,9 +272,8 @@ impl hal::blocking::spi::Transactional<u8> for Spidev {
             match a {
                 SpiOperation::Write(w) => SpidevTransfer::write(w),
                 SpiOperation::Transfer(r) => {
-                    // TODO: is spidev okay with the same array pointer
-                    // being used twice? If not, need some kind of vector 
-                    // pool that will outlive the transfer
+                    // Clone read to write pointer
+                    // SPIdev is okay with having w == r but this is tricky to achieve in safe rust
                     let w = unsafe {
                         let p = r.as_ptr();
                         std::slice::from_raw_parts(p, r.len())
