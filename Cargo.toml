@@ -6,7 +6,7 @@ keywords = ["Linux", "hal"]
 license = "MIT OR Apache-2.0"
 name = "linux-embedded-hal"
 repository = "https://github.com/japaric/linux-embedded-hal"
-version = "0.3.0"
+version = "1.0.0-alpha.0"
 
 [features]
 gpio_sysfs = ["sysfs_gpio"]
@@ -15,7 +15,7 @@ gpio_cdev = ["gpio-cdev"]
 default = [ "gpio_cdev", "gpio_sysfs" ]
 
 [dependencies]
-embedded-hal = { version = "0.2.3", features = ["unproven"] }
+embedded-hal = { version = "=1.0.0-alpha.2", features = ["unproven"] }
 gpio-cdev = { version = "0.3", optional = true }
 sysfs_gpio = { version = "0.5", optional = true }
 
@@ -33,3 +33,4 @@ openpty = "0.1.0"
 # we don't need the `Error` implementation
 default-features = false
 version = "0.2.2"
+
