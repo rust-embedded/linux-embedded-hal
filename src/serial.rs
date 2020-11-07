@@ -33,7 +33,7 @@ fn translate_io_errors(err: std::io::Error) -> nb::Error<IoErrorKind> {
 impl hal::serial::Read<u8> for Serial {
     type Error = IoErrorKind;
 
-    fn read(&mut self) -> nb::Result<u8, Self::Error> {
+    fn try_read(&mut self) -> nb::Result<u8, Self::Error> {
         let mut buffer = [0; 1];
         let bytes_read = self.0.read(&mut buffer).map_err(translate_io_errors)?;
         if bytes_read == 1 {
@@ -47,12 +47,12 @@ impl hal::serial::Read<u8> for Serial {
 impl hal::serial::Write<u8> for Serial {
     type Error = IoErrorKind;
 
-    fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
+    fn try_write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
         self.0.write(&[word]).map_err(translate_io_errors)?;
         Ok(())
     }
 
-    fn flush(&mut self) -> nb::Result<(), Self::Error> {
+    fn try_flush(&mut self) -> nb::Result<(), Self::Error> {
         self.0.flush().map_err(translate_io_errors)
     }
 }
@@ -76,20 +76,20 @@ mod test {
     #[test]
     fn test_empty_read() {
         let (mut _master, mut serial) = create_pty_and_serial();
-        assert_eq!(Err(nb::Error::WouldBlock), serial.read());
+        assert_eq!(Err(nb::Error::WouldBlock), serial.try_read());
     }
 
     #[test]
     fn test_read() {
         let (mut master, mut serial) = create_pty_and_serial();
         master.write(&[1]).expect("Write failed");
-        assert_eq!(Ok(1), serial.read());
+        assert_eq!(Ok(1), serial.try_read());
     }
 
     #[test]
     fn test_write() {
         let (mut master, mut serial) = create_pty_and_serial();
-        serial.write(2).expect("Write failed");
+        serial.try_write(2).expect("Write failed");
         let mut buf = [0; 2];
         assert_eq!(1, master.read(&mut buf).unwrap());
         assert_eq!(buf, [2, 0]);

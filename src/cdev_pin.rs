@@ -15,22 +15,22 @@ impl CdevPin {
     }
 }
 
-impl hal::digital::v2::OutputPin for CdevPin {
+impl hal::digital::OutputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn set_low(&mut self) -> Result<(), Self::Error> {
+    fn try_set_low(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(0)
     }
 
-    fn set_high(&mut self) -> Result<(), Self::Error> {
+    fn try_set_high(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(1)
     }
 }
 
-impl hal::digital::v2::InputPin for CdevPin {
+impl hal::digital::InputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn is_high(&self) -> Result<bool, Self::Error> {
+    fn try_is_high(&self) -> Result<bool, Self::Error> {
         if !self.1 {
             self.0.get_value().map(|val| val != 0)
         } else {
@@ -38,8 +38,8 @@ impl hal::digital::v2::InputPin for CdevPin {
         }
     }
 
-    fn is_low(&self) -> Result<bool, Self::Error> {
-        self.is_high().map(|val| !val)
+    fn try_is_low(&self) -> Result<bool, Self::Error> {
+        self.try_is_high().map(|val| !val)
     }
 }
 
