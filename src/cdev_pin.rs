@@ -15,7 +15,7 @@ impl CdevPin {
     }
 }
 
-impl hal::digital::OutputPin for CdevPin {
+impl embedded_hal::digital::OutputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
     fn try_set_low(&mut self) -> Result<(), Self::Error> {
@@ -27,7 +27,7 @@ impl hal::digital::OutputPin for CdevPin {
     }
 }
 
-impl hal::digital::InputPin for CdevPin {
+impl embedded_hal::digital::InputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
     fn try_is_high(&self) -> Result<bool, Self::Error> {

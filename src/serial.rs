@@ -5,7 +5,6 @@ use std::path::Path;
 
 use nb;
 
-use hal;
 use serial_core;
 use serial_unix::TTYPort;
 
@@ -30,7 +29,7 @@ fn translate_io_errors(err: std::io::Error) -> nb::Error<IoErrorKind> {
     }
 }
 
-impl hal::serial::Read<u8> for Serial {
+impl embedded_hal::serial::Read<u8> for Serial {
     type Error = IoErrorKind;
 
     fn try_read(&mut self) -> nb::Result<u8, Self::Error> {
@@ -44,7 +43,7 @@ impl hal::serial::Read<u8> for Serial {
     }
 }
 
-impl hal::serial::Write<u8> for Serial {
+impl embedded_hal::serial::Write<u8> for Serial {
     type Error = IoErrorKind;
 
     fn try_write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
@@ -61,7 +60,7 @@ impl hal::serial::Write<u8> for Serial {
 mod test {
     use std::path::Path;
 
-    use hal::serial::{Read, Write};
+    use embedded_hal::serial::{Read, Write};
     use std::io::{Read as IoRead, Write as IoWrite};
 
     use super::*;

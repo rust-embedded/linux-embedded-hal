@@ -26,7 +26,7 @@ impl SysfsPin {
     }
 }
 
-impl hal::digital::OutputPin for SysfsPin {
+impl embedded_hal::digital::OutputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
     fn try_set_low(&mut self) -> Result<(), Self::Error> {
@@ -38,7 +38,7 @@ impl hal::digital::OutputPin for SysfsPin {
     }
 }
 
-impl hal::digital::InputPin for SysfsPin {
+impl embedded_hal::digital::InputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
     fn try_is_high(&self) -> Result<bool, Self::Error> {
