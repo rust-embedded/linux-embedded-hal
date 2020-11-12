@@ -34,6 +34,7 @@ use std::time::Duration;
 use std::{ops, thread};
 
 use cast::{u32, u64};
+use hal::blocking::i2c::Operation as I2cOperation;
 use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
 use i2cdev::linux::LinuxI2CMessage;
 use spidev::SpidevTransfer;
@@ -203,6 +204,26 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
     ) -> Result<(), Self::Error> {
         self.set_address(address)?;
         let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
+        self.inner.transfer(&mut messages).map(drop)
+    }
+}
+
+impl hal::blocking::i2c::Transactional for I2cdev {
+    type Error = i2cdev::linux::LinuxI2CError;
+
+    fn try_exec(&mut self, address: u8, operations: &mut [I2cOperation]) -> Result<(), Self::Error>
+    {
+        // Map operations from generic to linux objects
+        let mut messages: Vec<_> = operations
+            .as_mut()
+            .iter_mut()
+            .map(|a| match a {
+                I2cOperation::Write(w) => LinuxI2CMessage::write(w),
+                I2cOperation::Read(r) => LinuxI2CMessage::read(r),
+            })
+            .collect();
+
+        self.set_address(address)?;
         self.inner.transfer(&mut messages).map(drop)
     }
 }
