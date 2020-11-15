@@ -33,7 +33,7 @@ use std::time::Duration;
 use std::{ops, thread};
 
 use cast::{u32, u64};
-use hal::blocking::i2c::Operation as I2cOperation;
+use embedded_hal::blocking::i2c::Operation as I2cOperation;
 use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
 use i2cdev::linux::LinuxI2CMessage;
 use spidev::SpidevTransfer;
@@ -210,7 +210,7 @@ impl embedded_hal::blocking::i2c::WriteRead for I2cdev {
     }
 }
 
-impl hal::blocking::i2c::Transactional for I2cdev {
+impl embedded_hal::blocking::i2c::Transactional for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
     fn try_exec(&mut self, address: u8, operations: &mut [I2cOperation]) -> Result<(), Self::Error>
