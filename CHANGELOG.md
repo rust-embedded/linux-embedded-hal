@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Set default features to build both sysfs and cdev pin types
 - Removed `Pin` export, use `CdevPin` or `SysfsPin`
+- Adapted to `embedded-hal` `1.0.0-alpha.3` release.
+- Updated `nb` to version `1`.
 
 ## [v0.3.0] - 2019-11-25
 
@@ -41,7 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- implementation of the unproven `embedded_hal::::digital::InputPin` trait. 
+- implementation of the unproven `embedded_hal::::digital::InputPin` trait.
 
 ## [v0.2.0] - 2018-05-14
 
