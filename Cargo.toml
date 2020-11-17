@@ -1,12 +1,16 @@
 [package]
-authors = ["Jorge Aparicio <jorge@japaric.io>"]
+authors = [
+    "The Embedded Linux Team <embedded-linux@teams.rust-embedded.org>",
+    "Jorge Aparicio <jorge@japaric.io>"
+]
 categories = ["embedded", "hardware-support"]
 description = "Implementation of the `embedded-hal` traits for Linux devices"
 keywords = ["Linux", "hal"]
 license = "MIT OR Apache-2.0"
 name = "linux-embedded-hal"
-repository = "https://github.com/japaric/linux-embedded-hal"
+repository = "https://github.com/rust-embedded/linux-embedded-hal"
 version = "0.3.0"
+edition = "2018"
 
 [features]
 gpio_sysfs = ["sysfs_gpio"]
@@ -32,3 +36,4 @@ openpty = "0.1.0"
 # we don't need the `Error` implementation
 default-features = false
 version = "0.2.2"
+
