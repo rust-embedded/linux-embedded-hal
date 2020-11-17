@@ -8,6 +8,9 @@ This project is developed and maintained by the [Embedded Linux team][team].
 
 ## [Documentation](https://docs.rs/linux-embedded-hal)
 
+Note that current `v0.4.0-alpha.X` releases track the unstable ['embedded-hal'] `v1.0.0-alpha.Y`.
+For bugfixes or backports please open PRs against the `v0.3.x` branch.
+
 ## GPIO character device
 
 Since Linux kernel v4.4 the use of sysfs GPIO was deprecated and replaced by the character device GPIO.
@@ -22,7 +25,7 @@ linux-embedded-hal = { version = "0.3", features = ["gpio_cdev"] }
 
 `SysfsPin` can be still used with feature flag `gpio_sysfs`.
 
-# Minimum Supported Rust Version (MSRV)
+## Minimum Supported Rust Version (MSRV)
 
 This crate is guaranteed to compile on stable Rust 1.36.0 and up. It *might*
 compile with older versions but that may change in any new patch release.
