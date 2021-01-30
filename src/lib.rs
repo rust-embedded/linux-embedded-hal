@@ -25,7 +25,6 @@ pub use sysfs_gpio;
 #[cfg(feature = "gpio_cdev")]
 pub use gpio_cdev;
 
-
 use core::convert::Infallible;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -202,10 +201,7 @@ impl embedded_hal::blocking::i2c::WriteRead for I2cdev {
         buffer: &mut [u8],
     ) -> Result<(), Self::Error> {
         self.set_address(address)?;
-        let mut messages = [
-            LinuxI2CMessage::write(bytes),
-            LinuxI2CMessage::read(buffer),
-        ];
+        let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
         self.inner.transfer(&mut messages).map(drop)
     }
 }
@@ -213,8 +209,11 @@ impl embedded_hal::blocking::i2c::WriteRead for I2cdev {
 impl embedded_hal::blocking::i2c::Transactional for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn try_exec(&mut self, address: u8, operations: &mut [I2cOperation]) -> Result<(), Self::Error>
-    {
+    fn try_exec(
+        &mut self,
+        address: u8,
+        operations: &mut [I2cOperation],
+    ) -> Result<(), Self::Error> {
         // Map operations from generic to linux objects
         let mut messages: Vec<_> = operations
             .as_mut()
@@ -280,30 +279,32 @@ impl embedded_hal::blocking::spi::Write<u8> for Spidev {
     }
 }
 
-pub use embedded_hal::blocking::spi::{Operation as SpiOperation};
+pub use embedded_hal::blocking::spi::Operation as SpiOperation;
 
 /// Transactional implementation batches SPI operations into a single transaction
 impl embedded_hal::blocking::spi::Transactional<u8> for Spidev {
     type Error = io::Error;
 
     fn try_exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
-
         // Map types from generic to linux objects
-        let mut messages: Vec<_> = operations.iter_mut().map(|a| {
-            match a {
-                SpiOperation::Write(w) => SpidevTransfer::write(w),
-                SpiOperation::Transfer(r) => {
-                    // Clone read to write pointer
-                    // SPIdev is okay with having w == r but this is tricky to achieve in safe rust
-                    let w = unsafe {
-                        let p = r.as_ptr();
-                        std::slice::from_raw_parts(p, r.len())
-                    };
+        let mut messages: Vec<_> = operations
+            .iter_mut()
+            .map(|a| {
+                match a {
+                    SpiOperation::Write(w) => SpidevTransfer::write(w),
+                    SpiOperation::Transfer(r) => {
+                        // Clone read to write pointer
+                        // SPIdev is okay with having w == r but this is tricky to achieve in safe rust
+                        let w = unsafe {
+                            let p = r.as_ptr();
+                            std::slice::from_raw_parts(p, r.len())
+                        };
 
-                    SpidevTransfer::read_write(w, r)
-                },
-            }
-        }).collect();
+                        SpidevTransfer::read_write(w, r)
+                    }
+                }
+            })
+            .collect();
 
         // Execute transfer
         self.0.transfer_multiple(&mut messages)
