@@ -1,4 +1,8 @@
 block_labels = ["needs-decision"]
 delete_merged_branches = true
 required_approvals = 1
-status = ["continuous-integration/travis-ci/push"]
+status = [
+  "CI (stable, x86_64-unknown-linux-gnu)",
+  "CI (stable, armv7-unknown-linux-gnueabihf)",
+  "CI (1.35.0, x86_64-unknown-linux-gnu)",
+]
