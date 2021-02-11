@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Set default features to build both sysfs and cdev pin types
-- Removed `Pin` export, use `CdevPin` or `SysfsPin`
+- Set default features to build both sysfs and cdev pin types.
+- Removed `Pin` export, use `CdevPin` or `SysfsPin`.
+- Increased the Minimum Supported Rust Version to `1.36.0` due to an update of `gpio_cdev`.
 - Adapted to `embedded-hal` `1.0.0-alpha.3` release.
 - Updated `nb` to version `1`.
 
