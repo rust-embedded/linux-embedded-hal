@@ -54,6 +54,26 @@ impl embedded_hal::digital::InputPin for SysfsPin {
     }
 }
 
+impl embedded_hal::digital::IoPin<SysfsPin, SysfsPin> for SysfsPin {
+    type Error = sysfs_gpio::Error;
+
+    fn try_into_input_pin(self) -> Result<SysfsPin, Self::Error> {
+        self.set_direction(sysfs_gpio::Direction::In)?;
+        Ok(self)
+    }
+
+    fn try_into_output_pin(
+        self,
+        state: embedded_hal::digital::PinState,
+    ) -> Result<SysfsPin, Self::Error> {
+        self.set_direction(match state {
+            embedded_hal::digital::PinState::High => sysfs_gpio::Direction::High,
+            embedded_hal::digital::PinState::Low => sysfs_gpio::Direction::Low,
+        })?;
+        Ok(self)
+    }
+}
+
 impl core::ops::Deref for SysfsPin {
     type Target = sysfs_gpio::Pin;
 
