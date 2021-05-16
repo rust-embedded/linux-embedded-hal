@@ -36,11 +36,11 @@ impl CdevPin {
 impl embedded_hal::digital::OutputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn try_set_low(&mut self) -> Result<(), Self::Error> {
+    fn set_low(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(0)
     }
 
-    fn try_set_high(&mut self) -> Result<(), Self::Error> {
+    fn set_high(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(1)
     }
 }
@@ -48,7 +48,7 @@ impl embedded_hal::digital::OutputPin for CdevPin {
 impl embedded_hal::digital::InputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn try_is_high(&self) -> Result<bool, Self::Error> {
+    fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.1.is_active_low() {
             self.0.get_value().map(|val| val != 0)
         } else {
@@ -56,15 +56,15 @@ impl embedded_hal::digital::InputPin for CdevPin {
         }
     }
 
-    fn try_is_low(&self) -> Result<bool, Self::Error> {
-        self.try_is_high().map(|val| !val)
+    fn is_low(&self) -> Result<bool, Self::Error> {
+        self.is_high().map(|val| !val)
     }
 }
 
 impl embedded_hal::digital::IoPin<CdevPin, CdevPin> for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn try_into_input_pin(self) -> Result<CdevPin, Self::Error> {
+    fn into_input_pin(self) -> Result<CdevPin, Self::Error> {
         if self.1.direction() == gpio_cdev::LineDirection::In {
             return Ok(self);
         }
@@ -78,7 +78,7 @@ impl embedded_hal::digital::IoPin<CdevPin, CdevPin> for CdevPin {
         CdevPin::new(line.request(input_flags, 0, &consumer)?)
     }
 
-    fn try_into_output_pin(
+    fn into_output_pin(
         self,
         state: embedded_hal::digital::PinState,
     ) -> Result<CdevPin, Self::Error> {

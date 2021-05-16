@@ -23,7 +23,7 @@ where
             I2cOperation::Write(&[0xAB]),
             I2cOperation::Read(&mut read_buffer),
         ];
-        self.i2c.try_exec(ADDR, &mut ops).and(Ok(read_buffer[0]))
+        self.i2c.exec(ADDR, &mut ops).and(Ok(read_buffer[0]))
     }
 }
 

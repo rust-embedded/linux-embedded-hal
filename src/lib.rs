@@ -64,7 +64,7 @@ pub struct Delay;
 impl embedded_hal::blocking::delay::DelayUs<u8> for Delay {
     type Error = Infallible;
 
-    fn try_delay_us(&mut self, n: u8) -> Result<(), Self::Error> {
+    fn delay_us(&mut self, n: u8) -> Result<(), Self::Error> {
         thread::sleep(Duration::new(0, u32(n) * 1000));
         Ok(())
     }
@@ -73,7 +73,7 @@ impl embedded_hal::blocking::delay::DelayUs<u8> for Delay {
 impl embedded_hal::blocking::delay::DelayUs<u16> for Delay {
     type Error = Infallible;
 
-    fn try_delay_us(&mut self, n: u16) -> Result<(), Self::Error> {
+    fn delay_us(&mut self, n: u16) -> Result<(), Self::Error> {
         thread::sleep(Duration::new(0, u32(n) * 1000));
         Ok(())
     }
@@ -82,7 +82,7 @@ impl embedded_hal::blocking::delay::DelayUs<u16> for Delay {
 impl embedded_hal::blocking::delay::DelayUs<u32> for Delay {
     type Error = Infallible;
 
-    fn try_delay_us(&mut self, n: u32) -> Result<(), Self::Error> {
+    fn delay_us(&mut self, n: u32) -> Result<(), Self::Error> {
         let secs = n / 1_000_000;
         let nsecs = (n % 1_000_000) * 1_000;
 
@@ -94,7 +94,7 @@ impl embedded_hal::blocking::delay::DelayUs<u32> for Delay {
 impl embedded_hal::blocking::delay::DelayUs<u64> for Delay {
     type Error = Infallible;
 
-    fn try_delay_us(&mut self, n: u64) -> Result<(), Self::Error> {
+    fn delay_us(&mut self, n: u64) -> Result<(), Self::Error> {
         let secs = n / 1_000_000;
         let nsecs = ((n % 1_000_000) * 1_000) as u32;
 
@@ -106,7 +106,7 @@ impl embedded_hal::blocking::delay::DelayUs<u64> for Delay {
 impl embedded_hal::blocking::delay::DelayMs<u8> for Delay {
     type Error = Infallible;
 
-    fn try_delay_ms(&mut self, n: u8) -> Result<(), Self::Error> {
+    fn delay_ms(&mut self, n: u8) -> Result<(), Self::Error> {
         thread::sleep(Duration::from_millis(u64(n)));
         Ok(())
     }
@@ -115,7 +115,7 @@ impl embedded_hal::blocking::delay::DelayMs<u8> for Delay {
 impl embedded_hal::blocking::delay::DelayMs<u16> for Delay {
     type Error = Infallible;
 
-    fn try_delay_ms(&mut self, n: u16) -> Result<(), Self::Error> {
+    fn delay_ms(&mut self, n: u16) -> Result<(), Self::Error> {
         thread::sleep(Duration::from_millis(u64(n)));
         Ok(())
     }
@@ -124,7 +124,7 @@ impl embedded_hal::blocking::delay::DelayMs<u16> for Delay {
 impl embedded_hal::blocking::delay::DelayMs<u32> for Delay {
     type Error = Infallible;
 
-    fn try_delay_ms(&mut self, n: u32) -> Result<(), Self::Error> {
+    fn delay_ms(&mut self, n: u32) -> Result<(), Self::Error> {
         thread::sleep(Duration::from_millis(u64(n)));
         Ok(())
     }
@@ -133,7 +133,7 @@ impl embedded_hal::blocking::delay::DelayMs<u32> for Delay {
 impl embedded_hal::blocking::delay::DelayMs<u64> for Delay {
     type Error = Infallible;
 
-    fn try_delay_ms(&mut self, n: u64) -> Result<(), Self::Error> {
+    fn delay_ms(&mut self, n: u64) -> Result<(), Self::Error> {
         thread::sleep(Duration::from_millis(n));
         Ok(())
     }
@@ -176,7 +176,7 @@ impl I2cdev {
 impl embedded_hal::blocking::i2c::Read for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn try_read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+    fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
         self.set_address(address)?;
         self.inner.read(buffer)
     }
@@ -185,7 +185,7 @@ impl embedded_hal::blocking::i2c::Read for I2cdev {
 impl embedded_hal::blocking::i2c::Write for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn try_write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+    fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
         self.set_address(address)?;
         self.inner.write(bytes)
     }
@@ -194,7 +194,7 @@ impl embedded_hal::blocking::i2c::Write for I2cdev {
 impl embedded_hal::blocking::i2c::WriteRead for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn try_write_read(
+    fn write_read(
         &mut self,
         address: u8,
         bytes: &[u8],
@@ -209,11 +209,7 @@ impl embedded_hal::blocking::i2c::WriteRead for I2cdev {
 impl embedded_hal::blocking::i2c::Transactional for I2cdev {
     type Error = i2cdev::linux::LinuxI2CError;
 
-    fn try_exec(
-        &mut self,
-        address: u8,
-        operations: &mut [I2cOperation],
-    ) -> Result<(), Self::Error> {
+    fn exec(&mut self, address: u8, operations: &mut [I2cOperation]) -> Result<(), Self::Error> {
         // Map operations from generic to linux objects
         let mut messages: Vec<_> = operations
             .as_mut()
@@ -263,7 +259,7 @@ impl Spidev {
 impl embedded_hal::blocking::spi::Transfer<u8> for Spidev {
     type Error = io::Error;
 
-    fn try_transfer<'b>(&mut self, buffer: &'b mut [u8]) -> io::Result<&'b [u8]> {
+    fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> io::Result<&'b [u8]> {
         let tx = buffer.to_owned();
         self.0
             .transfer(&mut SpidevTransfer::read_write(&tx, buffer))?;
@@ -274,7 +270,7 @@ impl embedded_hal::blocking::spi::Transfer<u8> for Spidev {
 impl embedded_hal::blocking::spi::Write<u8> for Spidev {
     type Error = io::Error;
 
-    fn try_write(&mut self, buffer: &[u8]) -> io::Result<()> {
+    fn write(&mut self, buffer: &[u8]) -> io::Result<()> {
         self.0.write_all(buffer)
     }
 }
@@ -285,7 +281,7 @@ pub use embedded_hal::blocking::spi::Operation as SpiOperation;
 impl embedded_hal::blocking::spi::Transactional<u8> for Spidev {
     type Error = io::Error;
 
-    fn try_exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
+    fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
         // Map types from generic to linux objects
         let mut messages: Vec<_> = operations
             .iter_mut()
