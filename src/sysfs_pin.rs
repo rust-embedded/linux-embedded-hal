@@ -30,11 +30,19 @@ impl embedded_hal::digital::OutputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
     fn try_set_low(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(0)
+        if self.0.get_active_low()? {
+            self.0.set_value(1)
+        } else {
+            self.0.set_value(0)
+        }
     }
 
     fn try_set_high(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(1)
+        if self.0.get_active_low()? {
+            self.0.set_value(0)
+        } else {
+            self.0.set_value(1)
+        }
     }
 }
 
