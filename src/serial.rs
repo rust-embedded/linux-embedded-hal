@@ -1,12 +1,10 @@
 //! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.1/embedded_hal/serial/index.html)
 
-use std::io::{ErrorKind as IoErrorKind, Read, Write};
-use std::path::Path;
-
 use nb;
-
 use serial_core;
 use serial_unix::TTYPort;
+use std::io::{ErrorKind as IoErrorKind, Read, Write};
+use std::path::Path;
 
 /// Newtype around [`serial_unix::TTYPort`] that implements
 /// the `embedded-hal` traits.
