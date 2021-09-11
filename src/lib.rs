@@ -48,5 +48,5 @@ mod timer;
 pub use crate::delay::Delay;
 pub use crate::i2c::I2cdev;
 pub use crate::serial::Serial;
-pub use crate::spi::{SpiOperation, Spidev};
+pub use crate::spi::Spidev;
 pub use crate::timer::SysTimer;
