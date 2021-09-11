@@ -40,25 +40,24 @@ impl ops::DerefMut for Spidev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::blocking::spi::{Operation as SpiOperation, Transactional, Transfer, Write};
+    use embedded_hal::spi::blocking::{Operation as SpiOperation, Transactional, Transfer, Write};
     use spidev::SpidevTransfer;
     use std::io::Write as _;
 
     impl Transfer<u8> for Spidev {
         type Error = io::Error;
 
-        fn try_transfer<'b>(&mut self, buffer: &'b mut [u8]) -> io::Result<&'b [u8]> {
+        fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> io::Result<()> {
             let tx = buffer.to_owned();
             self.0
-                .transfer(&mut SpidevTransfer::read_write(&tx, buffer))?;
-            Ok(buffer)
+                .transfer(&mut SpidevTransfer::read_write(&tx, buffer))
         }
     }
 
     impl Write<u8> for Spidev {
         type Error = io::Error;
 
-        fn try_write(&mut self, buffer: &[u8]) -> io::Result<()> {
+        fn write(&mut self, buffer: &[u8]) -> io::Result<()> {
             self.0.write_all(buffer)
         }
     }
@@ -67,10 +66,7 @@ mod embedded_hal_impl {
     impl Transactional<u8> for Spidev {
         type Error = io::Error;
 
-        fn try_exec<'a>(
-            &mut self,
-            operations: &mut [SpiOperation<'a, u8>],
-        ) -> Result<(), Self::Error> {
+        fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
             // Map types from generic to linux objects
             let mut messages: Vec<_> = operations
                 .iter_mut()

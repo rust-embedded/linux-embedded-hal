@@ -28,10 +28,10 @@ impl SysfsPin {
     }
 }
 
-impl embedded_hal::digital::OutputPin for SysfsPin {
+impl embedded_hal::digital::blocking::OutputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
-    fn try_set_low(&mut self) -> Result<(), Self::Error> {
+    fn set_low(&mut self) -> Result<(), Self::Error> {
         if self.0.get_active_low()? {
             self.0.set_value(1)
         } else {
@@ -39,7 +39,7 @@ impl embedded_hal::digital::OutputPin for SysfsPin {
         }
     }
 
-    fn try_set_high(&mut self) -> Result<(), Self::Error> {
+    fn set_high(&mut self) -> Result<(), Self::Error> {
         if self.0.get_active_low()? {
             self.0.set_value(0)
         } else {
@@ -48,10 +48,10 @@ impl embedded_hal::digital::OutputPin for SysfsPin {
     }
 }
 
-impl embedded_hal::digital::InputPin for SysfsPin {
+impl embedded_hal::digital::blocking::InputPin for SysfsPin {
     type Error = sysfs_gpio::Error;
 
-    fn try_is_high(&self) -> Result<bool, Self::Error> {
+    fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low()? {
             self.0.get_value().map(|val| val != 0)
         } else {
@@ -59,8 +59,8 @@ impl embedded_hal::digital::InputPin for SysfsPin {
         }
     }
 
-    fn try_is_low(&self) -> Result<bool, Self::Error> {
-        self.try_is_high().map(|val| !val)
+    fn is_low(&self) -> Result<bool, Self::Error> {
+        self.is_high().map(|val| !val)
     }
 }
 

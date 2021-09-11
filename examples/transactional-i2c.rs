@@ -1,4 +1,4 @@
-use embedded_hal::blocking::i2c::{Operation as I2cOperation, Transactional};
+use embedded_hal::i2c::blocking::{Operation as I2cOperation, Transactional};
 use linux_embedded_hal::I2cdev;
 
 const ADDR: u8 = 0x12;
@@ -21,7 +21,7 @@ where
             I2cOperation::Write(&[0xAB]),
             I2cOperation::Read(&mut read_buffer),
         ];
-        self.i2c.try_exec(ADDR, &mut ops).and(Ok(read_buffer[0]))
+        self.i2c.exec(ADDR, &mut ops).and(Ok(read_buffer[0]))
     }
 }
 

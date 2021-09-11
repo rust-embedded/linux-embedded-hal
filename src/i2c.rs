@@ -55,7 +55,7 @@ impl ops::DerefMut for I2cdev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::blocking::i2c::{
+    use embedded_hal::i2c::blocking::{
         Operation as I2cOperation, Read, Transactional, Write, WriteRead,
     };
     use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
@@ -64,7 +64,7 @@ mod embedded_hal_impl {
     impl Read for I2cdev {
         type Error = i2cdev::linux::LinuxI2CError;
 
-        fn try_read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+        fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
             self.inner.read(buffer)
         }
@@ -73,7 +73,7 @@ mod embedded_hal_impl {
     impl Write for I2cdev {
         type Error = i2cdev::linux::LinuxI2CError;
 
-        fn try_write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+        fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
             self.inner.write(bytes)
         }
@@ -82,7 +82,7 @@ mod embedded_hal_impl {
     impl WriteRead for I2cdev {
         type Error = i2cdev::linux::LinuxI2CError;
 
-        fn try_write_read(
+        fn write_read(
             &mut self,
             address: u8,
             bytes: &[u8],
@@ -97,7 +97,7 @@ mod embedded_hal_impl {
     impl Transactional for I2cdev {
         type Error = i2cdev::linux::LinuxI2CError;
 
-        fn try_exec(
+        fn exec(
             &mut self,
             address: u8,
             operations: &mut [I2cOperation],
