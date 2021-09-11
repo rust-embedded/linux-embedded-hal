@@ -3,7 +3,6 @@
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 //!
 
-pub use embedded_hal::blocking::spi::Operation as SpiOperation;
 use std::io;
 use std::ops;
 use std::path::Path;
@@ -41,7 +40,7 @@ impl ops::DerefMut for Spidev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::blocking::spi::{Transactional, Transfer, Write};
+    use embedded_hal::blocking::spi::{Operation as SpiOperation, Transactional, Transfer, Write};
     use spidev::SpidevTransfer;
     use std::io::Write as _;
 
