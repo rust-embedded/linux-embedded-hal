@@ -12,7 +12,6 @@
 
 #![deny(missing_docs)]
 
-use cast;
 pub use i2cdev;
 pub use nb;
 pub use serial_core;
@@ -25,13 +24,10 @@ pub use sysfs_gpio;
 #[cfg(feature = "gpio_cdev")]
 pub use gpio_cdev;
 
-use core::convert::Infallible;
 use std::io::{self, Write};
+use std::ops;
 use std::path::Path;
-use std::time::Duration;
-use std::{ops, thread};
 
-use cast::{u32, u64};
 use spidev::SpidevTransfer;
 
 mod serial;
@@ -55,86 +51,8 @@ pub use cdev_pin::CdevPin;
 /// Sysfs pin re-export
 pub use sysfs_pin::SysfsPin;
 
-/// Empty struct that provides delay functionality on top of `thread::sleep`
-pub struct Delay;
-
-impl embedded_hal::blocking::delay::DelayUs<u8> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_us(&mut self, n: u8) -> Result<(), Self::Error> {
-        thread::sleep(Duration::new(0, u32(n) * 1000));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayUs<u16> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_us(&mut self, n: u16) -> Result<(), Self::Error> {
-        thread::sleep(Duration::new(0, u32(n) * 1000));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayUs<u32> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_us(&mut self, n: u32) -> Result<(), Self::Error> {
-        let secs = n / 1_000_000;
-        let nsecs = (n % 1_000_000) * 1_000;
-
-        thread::sleep(Duration::new(u64(secs), nsecs));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayUs<u64> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_us(&mut self, n: u64) -> Result<(), Self::Error> {
-        let secs = n / 1_000_000;
-        let nsecs = ((n % 1_000_000) * 1_000) as u32;
-
-        thread::sleep(Duration::new(secs, nsecs));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayMs<u8> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_ms(&mut self, n: u8) -> Result<(), Self::Error> {
-        thread::sleep(Duration::from_millis(u64(n)));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayMs<u16> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_ms(&mut self, n: u16) -> Result<(), Self::Error> {
-        thread::sleep(Duration::from_millis(u64(n)));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayMs<u32> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_ms(&mut self, n: u32) -> Result<(), Self::Error> {
-        thread::sleep(Duration::from_millis(u64(n)));
-        Ok(())
-    }
-}
-
-impl embedded_hal::blocking::delay::DelayMs<u64> for Delay {
-    type Error = Infallible;
-
-    fn try_delay_ms(&mut self, n: u64) -> Result<(), Self::Error> {
-        thread::sleep(Duration::from_millis(n));
-        Ok(())
-    }
-}
+mod delay;
+pub use crate::delay::Delay;
 
 mod i2c;
 pub use crate::i2c::I2cdev;
