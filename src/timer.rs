@@ -1,4 +1,6 @@
-//! Timers.
+//! Implementation of [`embedded-hal`] timer traits
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use core::convert::Infallible;
 use std::time::{Duration, Instant};

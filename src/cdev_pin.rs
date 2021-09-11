@@ -1,4 +1,6 @@
-//! Linux CDev pin type
+//! Implementation of [`embedded-hal`] digital input/output traits using a Linux CDev pin
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 /// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
 ///

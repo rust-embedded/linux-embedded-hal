@@ -1,4 +1,6 @@
-//! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.1/embedded_hal/serial/index.html)
+//! Implementation of [`embedded-hal`] serial traits
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use nb;
 use serial_core;

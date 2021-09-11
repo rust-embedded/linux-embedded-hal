@@ -1,4 +1,6 @@
-//! `embedded-hal` I2C traits implementation
+//! Implementation of [`embedded-hal`] I2C traits
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use std::ops;
 use std::path::{Path, PathBuf};

@@ -1,4 +1,6 @@
-//! Linux Sysfs pin type
+//! Implementation of [`embedded-hal`] digital input/output traits using a Linux Sysfs pin
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use std::path::Path;
 
