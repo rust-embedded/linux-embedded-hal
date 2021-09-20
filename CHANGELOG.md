@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added implementation of transactional SPI and I2C traits.
+
 ### Changed
 
+- Updated `embedded-hal` to version 0.2.6.
 - Set default features to build both sysfs and cdev pin types
 - Removed `Pin` export, use `CdevPin` or `SysfsPin`
 
@@ -41,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- implementation of the unproven `embedded_hal::::digital::InputPin` trait. 
+- implementation of the unproven `embedded_hal::::digital::InputPin` trait.
 
 ## [v0.2.0] - 2018-05-14
 
