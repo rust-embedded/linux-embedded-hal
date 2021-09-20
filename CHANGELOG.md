@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - `CountDown` implementation for `SysTimer`.
+- `Default` implementation for `SysTimer`.
 
 ### Changed
 
