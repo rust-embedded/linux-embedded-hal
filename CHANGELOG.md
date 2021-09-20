@@ -15,9 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- Set default features to build both sysfs and cdev pin types.
+- Removed `Pin` export, use `CdevPin` or `SysfsPin`.
 - Updated `embedded-hal` to version 0.2.6.
-- Set default features to build both sysfs and cdev pin types
-- Removed `Pin` export, use `CdevPin` or `SysfsPin`
+- Updated `nb` to version `0.1.3`.
 
 ### Fixed
 
