@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Added implementation of transactional SPI and I2C traits.
+- `Default` implementation for `SysTimer`.
 
 ### Changed
 

@@ -26,6 +26,12 @@ impl SysTimer {
     }
 }
 
+impl Default for SysTimer {
+    fn default() -> SysTimer {
+        SysTimer::new()
+    }
+}
+
 impl CountDown for SysTimer {
     type Time = Duration;
 
