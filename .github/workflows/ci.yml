@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -45,5 +45,11 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: check
+          command: build
+          args: --target=${{ matrix.TARGET }}
+
+      - uses: actions-rs/cargo@v1
+        if: ${{ matrix.TARGET == 'x86_64-unknown-linux-gnu' }}
+        with:
+          command: test
           args: --target=${{ matrix.TARGET }}
