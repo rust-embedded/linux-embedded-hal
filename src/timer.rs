@@ -83,12 +83,12 @@ mod tests {
         nb::block!(timer.wait()).unwrap();
         let after1 = Instant::now();
         let duration_ms_1 = (after1 - before).as_millis();
-        assert!(duration_ms_1 >= 100);
+        assert!(duration_ms_1 >= 98);
         assert!(duration_ms_1 < 500);
         nb::block!(timer.wait()).unwrap();
         let after2 = Instant::now();
         let duration_ms_2 = (after2 - after1).as_millis();
-        assert!(duration_ms_2 >= 100);
+        assert!(duration_ms_2 >= 98);
         assert!(duration_ms_2 < 500);
     }
 }
