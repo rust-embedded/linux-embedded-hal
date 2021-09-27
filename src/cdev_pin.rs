@@ -19,11 +19,19 @@ impl hal::digital::v2::OutputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(0)
+        if self.1 {
+            self.0.set_value(1)
+        } else {
+            self.0.set_value(0)
+        }
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(1)
+        if self.1 {
+            self.0.set_value(0)
+        } else {
+            self.0.set_value(1)
+        }
     }
 }
 

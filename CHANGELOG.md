@@ -7,10 +7,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added implementation of transactional SPI and I2C traits.
+- `CountDown` implementation for `SysTimer`.
+- `Default` implementation for `SysTimer`.
+
 ### Changed
 
-- Set default features to build both sysfs and cdev pin types
-- Removed `Pin` export, use `CdevPin` or `SysfsPin`
+- Set default features to build both sysfs and cdev pin types.
+- Removed `Pin` export, use `CdevPin` or `SysfsPin`.
+- Updated `embedded-hal` to version `0.2.6`.
+- Updated `nb` to version `0.1.3`.
+- Updated `gpio-cdev` to version `0.5`.
+- Updated `i2cdev` to version `0.5`.
+- Updated `spidev` to version `0.5`.
+- Updated `sysfs-gpio` to version `0.6`.
+- Updated `cast` to version `0.3`.
+
+### Fixed
+
+- Modified `OutputPin` behavior for active-low pins to match `InputPin` behavior.
 
 ## [v0.3.0] - 2019-11-25
 
@@ -41,7 +58,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- implementation of the unproven `embedded_hal::::digital::InputPin` trait. 
+- implementation of the unproven `embedded_hal::::digital::InputPin` trait.
 
 ## [v0.2.0] - 2018-05-14
 

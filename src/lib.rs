@@ -13,14 +13,12 @@
 #![deny(missing_docs)]
 
 extern crate cast;
-extern crate core;
 extern crate embedded_hal as hal;
 pub extern crate i2cdev;
-pub extern crate spidev;
-pub extern crate serial_unix;
-pub extern crate serial_core;
 pub extern crate nb;
-
+pub extern crate serial_core;
+pub extern crate serial_unix;
+pub extern crate spidev;
 
 #[cfg(feature = "gpio_sysfs")]
 pub extern crate sysfs_gpio;
@@ -28,13 +26,13 @@ pub extern crate sysfs_gpio;
 #[cfg(feature = "gpio_cdev")]
 pub extern crate gpio_cdev;
 
-
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::{ops, thread};
 
 use cast::{u32, u64};
+use hal::blocking::i2c::Operation as I2cOperation;
 use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
 use i2cdev::linux::LinuxI2CMessage;
 use spidev::SpidevTransfer;
@@ -59,7 +57,6 @@ pub use cdev_pin::CdevPin;
 #[cfg(feature = "gpio_sysfs")]
 /// Sysfs pin re-export
 pub use sysfs_pin::SysfsPin;
-
 
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
@@ -117,7 +114,6 @@ impl hal::blocking::delay::DelayMs<u64> for Delay {
         thread::sleep(Duration::from_millis(n))
     }
 }
-
 
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
@@ -186,6 +182,25 @@ impl hal::blocking::i2c::WriteRead for I2cdev {
     }
 }
 
+impl hal::blocking::i2c::Transactional for I2cdev {
+    type Error = i2cdev::linux::LinuxI2CError;
+
+    fn exec(&mut self, address: u8, operations: &mut [I2cOperation]) -> Result<(), Self::Error> {
+        // Map operations from generic to linux objects
+        let mut messages: Vec<_> = operations
+            .as_mut()
+            .iter_mut()
+            .map(|a| match a {
+                I2cOperation::Write(w) => LinuxI2CMessage::write(w),
+                I2cOperation::Read(r) => LinuxI2CMessage::read(r),
+            })
+            .collect();
+
+        self.set_address(address)?;
+        self.inner.transfer(&mut messages).map(drop)
+    }
+}
+
 impl ops::Deref for I2cdev {
     type Target = i2cdev::linux::LinuxI2CDevice;
 
@@ -233,6 +248,39 @@ impl hal::blocking::spi::Write<u8> for Spidev {
 
     fn write(&mut self, buffer: &[u8]) -> io::Result<()> {
         self.0.write_all(buffer)
+    }
+}
+
+pub use hal::blocking::spi::Operation as SpiOperation;
+
+impl hal::blocking::spi::Transactional<u8> for Spidev {
+    type Error = io::Error;
+
+    fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
+        // Map types from generic to linux objects
+        let mut messages: Vec<_> = operations
+            .iter_mut()
+            .map(|a| {
+                match a {
+                    SpiOperation::Write(w) => SpidevTransfer::write(w),
+                    SpiOperation::Transfer(r) => {
+                        // Clone read to write pointer
+                        // SPIdev is okay with having w == r but this is tricky to achieve in safe rust
+                        let w = unsafe {
+                            let p = r.as_ptr();
+                            std::slice::from_raw_parts(p, r.len())
+                        };
+
+                        SpidevTransfer::read_write(w, r)
+                    }
+                }
+            })
+            .collect();
+
+        // Execute transfer
+        self.0.transfer_multiple(&mut messages)?;
+
+        Ok(())
     }
 }
 
