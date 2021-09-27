@@ -2,13 +2,13 @@
 
 /// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
 ///
-/// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.2.0/gpio_cdev/struct.LineHandle.html
+/// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.LineHandle.html
 pub struct CdevPin(pub gpio_cdev::LineHandle, bool);
 
 impl CdevPin {
     /// See [`gpio_cdev::Line::request`][0] for details.
     ///
-    /// [0]: https://docs.rs/gpio-cdev/0.2.0/gpio_cdev/struct.Line.html#method.request
+    /// [0]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.Line.html#method.request
     pub fn new(handle: gpio_cdev::LineHandle) -> Result<Self, gpio_cdev::errors::Error> {
         let info = handle.line().info()?;
         Ok(CdevPin(handle, info.is_active_low()))
@@ -19,11 +19,19 @@ impl hal::digital::v2::OutputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(0)
+        if self.1 {
+            self.0.set_value(1)
+        } else {
+            self.0.set_value(0)
+        }
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(1)
+        if self.1 {
+            self.0.set_value(0)
+        } else {
+            self.0.set_value(1)
+        }
     }
 }
 
