@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.0-alpha.1] - 2021-09-27
+
 ### Changed
 
 - Modified `OutputPin` behavior for active-low pins to match `InputPin` behavior.
 - Set default features to build both sysfs and cdev pin types.
 - Removed `Pin` export, use `CdevPin` or `SysfsPin`.
-- Increased the Minimum Supported Rust Version to `1.46.0` due to an update of `bitflags`.
 - Adapted to `embedded-hal` `1.0.0-alpha.5` release.
+- Increased the Minimum Supported Rust Version to `1.46.0` due to an update of `bitflags`.
+- Updated `spidev` to version `0.5`.
+- Updated `i2cdev` to version `0.5`.
+- Updated `gpio-cdev` to version `0.5`.
+- Updated `sysfs_gpio` to version `0.6`.
 - Updated `nb` to version `1`.
 
 ## [v0.3.0] - 2019-11-25
@@ -66,8 +72,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/japaric/linux-embedded-hal/compare/v0.2.1...HEAD
-[v0.2.2]: https://github.com/japaric/linux-embedded-hal/compare/v0.2.1...v0.2.2
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.1...HEAD
+[v0.4.0-alpha.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.4.0-alpha.1
+[v0.3.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.2.2...v0.3.0
+[v0.2.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.2.1...v0.2.2
 [v0.2.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.1.1...v0.2.0
-[v0.1.1]: https://github.com/japaric/linux-embedded-hal/compare/v0.1.0...v0.1.1
+[v0.1.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.1.0...v0.1.1
