@@ -1,9 +1,11 @@
-//! Timers.
+//! Implementation of [`embedded-hal`] timer traits
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use core::convert::Infallible;
 use std::time::{Duration, Instant};
 
-use embedded_hal::timer::{CountDown, Periodic};
+use embedded_hal::timer::{nb::CountDown, Periodic};
 
 /// A periodic timer based on [`std::time::Instant`][instant], which is a
 /// monotonically nondecreasing clock.
@@ -31,7 +33,7 @@ impl CountDown for SysTimer {
     type Error = Infallible;
     type Time = Duration;
 
-    fn try_start<T>(&mut self, count: T) -> Result<(), Self::Error>
+    fn start<T>(&mut self, count: T) -> Result<(), Self::Error>
     where
         T: Into<Self::Time>,
     {
@@ -40,7 +42,7 @@ impl CountDown for SysTimer {
         Ok(())
     }
 
-    fn try_wait(&mut self) -> nb::Result<(), Self::Error> {
+    fn wait(&mut self) -> nb::Result<(), Self::Error> {
         if (Instant::now() - self.start) >= self.duration {
             // Restart the timer to fulfill the contract by `Periodic`
             self.start = Instant::now();
@@ -63,8 +65,8 @@ mod tests {
     fn test_delay() {
         let mut timer = SysTimer::new();
         let before = Instant::now();
-        timer.try_start(Duration::from_millis(100)).unwrap();
-        nb::block!(timer.try_wait()).unwrap();
+        timer.start(Duration::from_millis(100)).unwrap();
+        nb::block!(timer.wait()).unwrap();
         let after = Instant::now();
         let duration_ms = (after - before).as_millis();
         assert!(duration_ms >= 100);
@@ -76,13 +78,13 @@ mod tests {
     fn test_periodic() {
         let mut timer = SysTimer::new();
         let before = Instant::now();
-        timer.try_start(Duration::from_millis(100)).unwrap();
-        nb::block!(timer.try_wait()).unwrap();
+        timer.start(Duration::from_millis(100)).unwrap();
+        nb::block!(timer.wait()).unwrap();
         let after1 = Instant::now();
         let duration_ms_1 = (after1 - before).as_millis();
         assert!(duration_ms_1 >= 100);
         assert!(duration_ms_1 < 500);
-        nb::block!(timer.try_wait()).unwrap();
+        nb::block!(timer.wait()).unwrap();
         let after2 = Instant::now();
         let duration_ms_2 = (after2 - after1).as_millis();
         assert!(duration_ms_2 >= 100);

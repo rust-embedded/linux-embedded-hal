@@ -1,4 +1,6 @@
-//! Linux CDev pin type
+//! Implementation of [`embedded-hal`] digital input/output traits using a Linux CDev pin
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 /// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
 ///
@@ -15,10 +17,10 @@ impl CdevPin {
     }
 }
 
-impl embedded_hal::digital::OutputPin for CdevPin {
+impl embedded_hal::digital::blocking::OutputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn try_set_low(&mut self) -> Result<(), Self::Error> {
+    fn set_low(&mut self) -> Result<(), Self::Error> {
         if self.1 {
             self.0.set_value(1)
         } else {
@@ -26,7 +28,7 @@ impl embedded_hal::digital::OutputPin for CdevPin {
         }
     }
 
-    fn try_set_high(&mut self) -> Result<(), Self::Error> {
+    fn set_high(&mut self) -> Result<(), Self::Error> {
         if self.1 {
             self.0.set_value(0)
         } else {
@@ -35,10 +37,10 @@ impl embedded_hal::digital::OutputPin for CdevPin {
     }
 }
 
-impl embedded_hal::digital::InputPin for CdevPin {
+impl embedded_hal::digital::blocking::InputPin for CdevPin {
     type Error = gpio_cdev::errors::Error;
 
-    fn try_is_high(&self) -> Result<bool, Self::Error> {
+    fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.1 {
             self.0.get_value().map(|val| val != 0)
         } else {
@@ -46,8 +48,8 @@ impl embedded_hal::digital::InputPin for CdevPin {
         }
     }
 
-    fn try_is_low(&self) -> Result<bool, Self::Error> {
-        self.try_is_high().map(|val| !val)
+    fn is_low(&self) -> Result<bool, Self::Error> {
+        self.is_high().map(|val| !val)
     }
 }
 
