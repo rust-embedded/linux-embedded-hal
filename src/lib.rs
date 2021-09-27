@@ -117,7 +117,7 @@ impl hal::blocking::delay::DelayMs<u64> for Delay {
 
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
-/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html
+/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html
 pub struct I2cdev {
     inner: i2cdev::linux::LinuxI2CDevice,
     path: PathBuf,
@@ -127,7 +127,7 @@ pub struct I2cdev {
 impl I2cdev {
     /// See [`i2cdev::linux::LinuxI2CDevice::new`][0] for details.
     ///
-    /// [0]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
+    /// [0]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
     pub fn new<P>(path: P) -> Result<Self, i2cdev::linux::LinuxI2CError>
     where
         P: AsRef<Path>,
@@ -217,13 +217,13 @@ impl ops::DerefMut for I2cdev {
 
 /// Newtype around [`spidev::Spidev`] that implements the `embedded-hal` traits
 ///
-/// [`spidev::Spidev`]: https://docs.rs/spidev/0.4.0/spidev/struct.Spidev.html
+/// [`spidev::Spidev`]: https://docs.rs/spidev/0.5.0/spidev/struct.Spidev.html
 pub struct Spidev(pub spidev::Spidev);
 
 impl Spidev {
     /// See [`spidev::Spidev::open`][0] for details.
     ///
-    /// [0]: https://docs.rs/spidev/0.4.0/spidev/struct.Spidev.html#method.open
+    /// [0]: https://docs.rs/spidev/0.5.0/spidev/struct.Spidev.html#method.open
     pub fn open<P>(path: P) -> io::Result<Self>
     where
         P: AsRef<Path>,

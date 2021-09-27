@@ -1,4 +1,4 @@
-//! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.1/embedded_hal/serial/index.html)
+//! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.6/embedded_hal/serial/index.html)
 
 use std::io::{ErrorKind as IoErrorKind, Read, Write};
 use std::path::Path;
