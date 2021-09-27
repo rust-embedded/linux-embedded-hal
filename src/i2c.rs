@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
-/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html
+/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html
 pub struct I2cdev {
     inner: i2cdev::linux::LinuxI2CDevice,
     path: PathBuf,
@@ -17,7 +17,7 @@ pub struct I2cdev {
 impl I2cdev {
     /// See [`i2cdev::linux::LinuxI2CDevice::new`][0] for details.
     ///
-    /// [0]: https://docs.rs/i2cdev/0.3.1/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
+    /// [0]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
     pub fn new<P>(path: P) -> Result<Self, i2cdev::linux::LinuxI2CError>
     where
         P: AsRef<Path>,

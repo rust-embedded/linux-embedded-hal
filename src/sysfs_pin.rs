@@ -6,20 +6,20 @@ use std::path::Path;
 
 /// Newtype around [`sysfs_gpio::Pin`] that implements the `embedded-hal` traits
 ///
-/// [`sysfs_gpio::Pin`]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html
+/// [`sysfs_gpio::Pin`]: https://docs.rs/sysfs_gpio/0.6.0/sysfs_gpio/struct.Pin.html
 pub struct SysfsPin(pub sysfs_gpio::Pin);
 
 impl SysfsPin {
     /// See [`sysfs_gpio::Pin::new`][0] for details.
     ///
-    /// [0]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html#method.new
+    /// [0]: https://docs.rs/sysfs_gpio/0.6.0/sysfs_gpio/struct.Pin.html#method.new
     pub fn new(pin_num: u64) -> Self {
         SysfsPin(sysfs_gpio::Pin::new(pin_num))
     }
 
     /// See [`sysfs_gpio::Pin::from_path`][0] for details.
     ///
-    /// [0]: https://docs.rs/sysfs_gpio/0.5.1/sysfs_gpio/struct.Pin.html#method.from_path
+    /// [0]: https://docs.rs/sysfs_gpio/0.6.0/sysfs_gpio/struct.Pin.html#method.from_path
     pub fn from_path<P>(path: P) -> sysfs_gpio::Result<Self>
     where
         P: AsRef<Path>,
