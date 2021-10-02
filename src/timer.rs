@@ -1,9 +1,11 @@
-//! Timers.
+//! Implementation of [`embedded-hal`] timer traits
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use core::convert::Infallible;
 use std::time::{Duration, Instant};
 
-use embedded_hal::timer::{CountDown, Periodic};
+use embedded_hal::timer::{nb::CountDown, Periodic};
 
 /// A periodic timer based on [`std::time::Instant`][instant], which is a
 /// monotonically nondecreasing clock.

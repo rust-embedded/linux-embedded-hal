@@ -1,12 +1,12 @@
-//! Implementation of [`Serial`](https://docs.rs/embedded-hal/0.2.1/embedded_hal/serial/index.html)
-
-use std::io::{ErrorKind as IoErrorKind, Read, Write};
-use std::path::Path;
+//! Implementation of [`embedded-hal`] serial traits
+//!
+//! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use nb;
-
 use serial_core;
 use serial_unix::TTYPort;
+use std::io::{ErrorKind as IoErrorKind, Read, Write};
+use std::path::Path;
 
 /// Newtype around [`serial_unix::TTYPort`] that implements
 /// the `embedded-hal` traits.
@@ -29,7 +29,7 @@ fn translate_io_errors(err: std::io::Error) -> nb::Error<IoErrorKind> {
     }
 }
 
-impl embedded_hal::serial::Read<u8> for Serial {
+impl embedded_hal::serial::nb::Read<u8> for Serial {
     type Error = IoErrorKind;
 
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
@@ -43,7 +43,7 @@ impl embedded_hal::serial::Read<u8> for Serial {
     }
 }
 
-impl embedded_hal::serial::Write<u8> for Serial {
+impl embedded_hal::serial::nb::Write<u8> for Serial {
     type Error = IoErrorKind;
 
     fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
@@ -60,7 +60,7 @@ impl embedded_hal::serial::Write<u8> for Serial {
 mod test {
     use std::path::Path;
 
-    use embedded_hal::serial::{Read, Write};
+    use embedded_hal::serial::nb::{Read, Write};
     use std::io::{Read as IoRead, Write as IoWrite};
 
     use super::*;
