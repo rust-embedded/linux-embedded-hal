@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Implement `embedded_hal::digital::blocking::IoPin` for `CdevPin` and `SysfsPin`
+
 ## [v0.4.0-alpha.1] - 2021-09-27
 
 ### Changed
