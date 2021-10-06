@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v0.4.0-alpha.1] - 2021-09-27
 
+### Added
+
+- `CountDown` implementation for `SysTimer`.
+- `Default` implementation for `SysTimer`.
+
 ### Changed
 
 - Modified `OutputPin` behavior for active-low pins to match `InputPin` behavior.
