@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v0.3.2] - 2021-10-25
+
+### Fixed
+- Readd `Pin` type export as an alias to `SysfsPin` for compatibility with the `0.3.0` version.
+
 ## [v0.3.1] - 2021-09-27
 ### Added
 
