@@ -58,6 +58,9 @@ pub use cdev_pin::CdevPin;
 /// Sysfs pin re-export
 pub use sysfs_pin::SysfsPin;
 
+#[cfg(feature = "gpio_sysfs")]
+pub use sysfs_pin::SysfsPin as Pin;
+
 /// Empty struct that provides delay functionality on top of `thread::sleep`
 pub struct Delay;
 
