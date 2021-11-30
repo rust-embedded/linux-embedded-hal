@@ -20,17 +20,17 @@ impl Serial {
 }
 
 /// Helper to convert std::io::Error to the nb::Error
-fn translate_io_errors(err: std::io::Error) -> nb::Error<IoError> {
+fn translate_io_errors(err: std::io::Error) -> nb::Error<SerialError> {
     match err.kind() {
         IoErrorKind::WouldBlock | IoErrorKind::TimedOut | IoErrorKind::Interrupted => {
             nb::Error::WouldBlock
         }
-        err => nb::Error::Other(IoError { err }),
+        err => nb::Error::Other(SerialError { err }),
     }
 }
 
 impl embedded_hal::serial::nb::Read<u8> for Serial {
-    type Error = IoError;
+    type Error = SerialError;
 
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
         let mut buffer = [0; 1];
@@ -44,7 +44,7 @@ impl embedded_hal::serial::nb::Read<u8> for Serial {
 }
 
 impl embedded_hal::serial::nb::Write<u8> for Serial {
-    type Error = IoError;
+    type Error = SerialError;
 
     fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
         self.0.write(&[word]).map_err(translate_io_errors)?;
@@ -56,12 +56,13 @@ impl embedded_hal::serial::nb::Write<u8> for Serial {
     }
 }
 
+/// Error type wrapping [io::ErrorKind](IoErrorKind) to implement [embedded_hal::serial::ErrorKind]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct IoError {
+pub struct SerialError {
     err: IoErrorKind,
 }
 
-impl embedded_hal::serial::Error for IoError {
+impl embedded_hal::serial::Error for SerialError {
     fn kind(&self) -> embedded_hal::serial::ErrorKind {
         use embedded_hal::serial::ErrorKind::*;
         match &self.err {

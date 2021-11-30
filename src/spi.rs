@@ -47,37 +47,37 @@ mod embedded_hal_impl {
     use std::io::Write as _;
 
     impl Transfer<u8> for Spidev {
-        type Error = IoError;
+        type Error = SPIError;
 
         fn transfer<'b>(&mut self, read: &'b mut [u8], write: &[u8]) -> Result<(), Self::Error> {
             self.0
                 .transfer(&mut SpidevTransfer::read_write(&write, read))
-                .map_err(|err| IoError { err })
+                .map_err(|err| SPIError { err })
         }
     }
 
     impl TransferInplace<u8> for Spidev {
-        type Error = IoError;
+        type Error = SPIError;
 
         fn transfer_inplace<'b>(&mut self, buffer: &'b mut [u8]) -> Result<(), Self::Error> {
             let tx = buffer.to_owned();
             self.0
                 .transfer(&mut SpidevTransfer::read_write(&tx, buffer))
-                .map_err(|err| IoError { err })
+                .map_err(|err| SPIError { err })
         }
     }
 
     impl Write<u8> for Spidev {
-        type Error = IoError;
+        type Error = SPIError;
 
         fn write(&mut self, buffer: &[u8]) -> Result<(), Self::Error> {
-            self.0.write_all(buffer).map_err(|err| IoError { err })
+            self.0.write_all(buffer).map_err(|err| SPIError { err })
         }
     }
 
     /// Transactional implementation batches SPI operations into a single transaction
     impl Transactional<u8> for Spidev {
-        type Error = IoError;
+        type Error = SPIError;
 
         fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
             // Map types from generic to linux objects
@@ -105,23 +105,24 @@ mod embedded_hal_impl {
             // Execute transfer
             self.0
                 .transfer_multiple(&mut messages)
-                .map_err(|err| IoError { err })
+                .map_err(|err| SPIError { err })
         }
     }
 }
 
+/// Error type wrapping [io::Error](io::Error) to implement [embedded_hal::spi::ErrorKind]
 #[derive(Debug)]
-pub struct IoError {
+pub struct SPIError {
     err: io::Error,
 }
 
-impl From<io::Error> for IoError {
+impl From<io::Error> for SPIError {
     fn from(err: io::Error) -> Self {
         Self { err }
     }
 }
 
-impl embedded_hal::spi::Error for IoError {
+impl embedded_hal::spi::Error for SPIError {
     fn kind(&self) -> embedded_hal::spi::ErrorKind {
         use embedded_hal::spi::ErrorKind::*;
         match self.err.kind() {

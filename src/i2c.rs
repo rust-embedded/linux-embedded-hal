@@ -124,6 +124,7 @@ mod embedded_hal_impl {
     }
 }
 
+/// Error type wrapping [LinuxI2CError](i2cdev::linux::LinuxI2CError) to implement [embedded_hal::i2c::ErrorKind]
 #[derive(Debug)]
 pub struct I2CError {
     err: i2cdev::linux::LinuxI2CError,
