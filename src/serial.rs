@@ -20,17 +20,17 @@ impl Serial {
 }
 
 /// Helper to convert std::io::Error to the nb::Error
-fn translate_io_errors(err: std::io::Error) -> nb::Error<IoErrorKind> {
+fn translate_io_errors(err: std::io::Error) -> nb::Error<IoError> {
     match err.kind() {
         IoErrorKind::WouldBlock | IoErrorKind::TimedOut | IoErrorKind::Interrupted => {
             nb::Error::WouldBlock
         }
-        err => nb::Error::Other(err),
+        err => nb::Error::Other(IoError { err }),
     }
 }
 
 impl embedded_hal::serial::nb::Read<u8> for Serial {
-    type Error = IoErrorKind;
+    type Error = IoError;
 
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
         let mut buffer = [0; 1];
@@ -44,7 +44,7 @@ impl embedded_hal::serial::nb::Read<u8> for Serial {
 }
 
 impl embedded_hal::serial::nb::Write<u8> for Serial {
-    type Error = IoErrorKind;
+    type Error = IoError;
 
     fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
         self.0.write(&[word]).map_err(translate_io_errors)?;
@@ -53,6 +53,61 @@ impl embedded_hal::serial::nb::Write<u8> for Serial {
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
         self.0.flush().map_err(translate_io_errors)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct IoError {
+    err: IoErrorKind,
+}
+
+impl embedded_hal::serial::Error for IoError {
+    fn kind(&self) -> embedded_hal::serial::ErrorKind {
+        use embedded_hal::serial::ErrorKind::*;
+        match &self.err {
+            // IoErrorKind::NotFound => todo!(),
+            // IoErrorKind::PermissionDenied => todo!(),
+            // IoErrorKind::ConnectionRefused => todo!(),
+            // IoErrorKind::ConnectionReset => todo!(),
+            // IoErrorKind::HostUnreachable => todo!(),
+            // IoErrorKind::NetworkUnreachable => todo!(),
+            // IoErrorKind::ConnectionAborted => todo!(),
+            // IoErrorKind::NotConnected => todo!(),
+            // IoErrorKind::AddrInUse => todo!(),
+            // IoErrorKind::AddrNotAvailable => todo!(),
+            // IoErrorKind::NetworkDown => todo!(),
+            // IoErrorKind::BrokenPipe => todo!(),
+            // IoErrorKind::AlreadyExists => todo!(),
+            // IoErrorKind::WouldBlock => todo!(),
+            // IoErrorKind::NotADirectory => todo!(),
+            // IoErrorKind::IsADirectory => todo!(),
+            // IoErrorKind::DirectoryNotEmpty => todo!(),
+            // IoErrorKind::ReadOnlyFilesystem => todo!(),
+            // IoErrorKind::FilesystemLoop => todo!(),
+            // IoErrorKind::StaleNetworkFileHandle => todo!(),
+            // IoErrorKind::InvalidInput => todo!(),
+            // IoErrorKind::InvalidData => todo!(),
+            // IoErrorKind::TimedOut => todo!(),
+            // IoErrorKind::WriteZero => todo!(),
+            // IoErrorKind::StorageFull => todo!(),
+            // IoErrorKind::NotSeekable => todo!(),
+            // IoErrorKind::FilesystemQuotaExceeded => todo!(),
+            // IoErrorKind::FileTooLarge => todo!(),
+            // IoErrorKind::ResourceBusy => todo!(),
+            // IoErrorKind::ExecutableFileBusy => todo!(),
+            // IoErrorKind::Deadlock => todo!(),
+            // IoErrorKind::CrossesDevices => todo!(),
+            // IoErrorKind::TooManyLinks => todo!(),
+            // IoErrorKind::FilenameTooLong => todo!(),
+            // IoErrorKind::ArgumentListTooLong => todo!(),
+            // IoErrorKind::Interrupted => todo!(),
+            // IoErrorKind::Unsupported => todo!(),
+            // IoErrorKind::UnexpectedEof => todo!(),
+            // IoErrorKind::OutOfMemory => todo!(),
+            // IoErrorKind::Other => todo!(),
+            // IoErrorKind::Uncategorized => todo!(),
+            _ => Other,
+        }
     }
 }
 

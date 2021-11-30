@@ -62,25 +62,25 @@ mod embedded_hal_impl {
     use i2cdev::linux::LinuxI2CMessage;
 
     impl Read for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
-            self.inner.read(buffer)
+            self.inner.read(buffer).map_err(|err| I2CError { err })
         }
     }
 
     impl Write for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
-            self.inner.write(bytes)
+            self.inner.write(bytes).map_err(|err| I2CError { err })
         }
     }
 
     impl WriteRead for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn write_read(
             &mut self,
@@ -90,12 +90,15 @@ mod embedded_hal_impl {
         ) -> Result<(), Self::Error> {
             self.set_address(address)?;
             let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
-            self.inner.transfer(&mut messages).map(drop)
+            self.inner
+                .transfer(&mut messages)
+                .map(drop)
+                .map_err(|err| I2CError { err })
         }
     }
 
     impl Transactional for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn exec(
             &mut self,
@@ -113,7 +116,71 @@ mod embedded_hal_impl {
                 .collect();
 
             self.set_address(address)?;
-            self.inner.transfer(&mut messages).map(drop)
+            self.inner
+                .transfer(&mut messages)
+                .map(drop)
+                .map_err(|err| I2CError { err })
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct I2CError {
+    err: i2cdev::linux::LinuxI2CError,
+}
+
+impl From<i2cdev::linux::LinuxI2CError> for I2CError {
+    fn from(err: i2cdev::linux::LinuxI2CError) -> Self {
+        Self { err }
+    }
+}
+
+impl embedded_hal::i2c::Error for I2CError {
+    fn kind(&self) -> embedded_hal::i2c::ErrorKind {
+        use embedded_hal::i2c::ErrorKind::*;
+        match &self.err {
+            // IoErrorKind::NotFound => todo!(),
+            // IoErrorKind::PermissionDenied => todo!(),
+            // IoErrorKind::ConnectionRefused => todo!(),
+            // IoErrorKind::ConnectionReset => todo!(),
+            // IoErrorKind::HostUnreachable => todo!(),
+            // IoErrorKind::NetworkUnreachable => todo!(),
+            // IoErrorKind::ConnectionAborted => todo!(),
+            // IoErrorKind::NotConnected => todo!(),
+            // IoErrorKind::AddrInUse => todo!(),
+            // IoErrorKind::AddrNotAvailable => todo!(),
+            // IoErrorKind::NetworkDown => todo!(),
+            // IoErrorKind::BrokenPipe => todo!(),
+            // IoErrorKind::AlreadyExists => todo!(),
+            // IoErrorKind::WouldBlock => todo!(),
+            // IoErrorKind::NotADirectory => todo!(),
+            // IoErrorKind::IsADirectory => todo!(),
+            // IoErrorKind::DirectoryNotEmpty => todo!(),
+            // IoErrorKind::ReadOnlyFilesystem => todo!(),
+            // IoErrorKind::FilesystemLoop => todo!(),
+            // IoErrorKind::StaleNetworkFileHandle => todo!(),
+            // IoErrorKind::InvalidInput => todo!(),
+            // IoErrorKind::InvalidData => todo!(),
+            // IoErrorKind::TimedOut => todo!(),
+            // IoErrorKind::WriteZero => todo!(),
+            // IoErrorKind::StorageFull => todo!(),
+            // IoErrorKind::NotSeekable => todo!(),
+            // IoErrorKind::FilesystemQuotaExceeded => todo!(),
+            // IoErrorKind::FileTooLarge => todo!(),
+            // IoErrorKind::ResourceBusy => todo!(),
+            // IoErrorKind::ExecutableFileBusy => todo!(),
+            // IoErrorKind::Deadlock => todo!(),
+            // IoErrorKind::CrossesDevices => todo!(),
+            // IoErrorKind::TooManyLinks => todo!(),
+            // IoErrorKind::FilenameTooLong => todo!(),
+            // IoErrorKind::ArgumentListTooLong => todo!(),
+            // IoErrorKind::Interrupted => todo!(),
+            // IoErrorKind::Unsupported => todo!(),
+            // IoErrorKind::UnexpectedEof => todo!(),
+            // IoErrorKind::OutOfMemory => todo!(),
+            // IoErrorKind::Other => todo!(),
+            // IoErrorKind::Uncategorized => todo!(),
+            _ => Other,
         }
     }
 }
