@@ -16,11 +16,11 @@ impl Spidev {
     /// See [`spidev::Spidev::open`][0] for details.
     ///
     /// [0]: https://docs.rs/spidev/0.5.0/spidev/struct.Spidev.html#method.open
-    pub fn open<P>(path: P) -> io::Result<Self>
+    pub fn open<P>(path: P) -> Result<Self, SPIError>
     where
         P: AsRef<Path>,
     {
-        spidev::Spidev::open(path).map(Spidev)
+        spidev::Spidev::open(path).map(Spidev).map_err(|e| e.into())
     }
 }
 
