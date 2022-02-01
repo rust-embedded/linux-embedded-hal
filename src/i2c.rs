@@ -5,6 +5,8 @@
 use std::ops;
 use std::path::{Path, PathBuf};
 
+use embedded_hal::i2c::NoAcknowledgeSource;
+
 /// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
 ///
 /// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html
@@ -130,6 +132,13 @@ pub struct I2CError {
     err: i2cdev::linux::LinuxI2CError,
 }
 
+impl I2CError {
+    /// Fetch inner (concrete) [`LinuxI2CError`]
+    pub fn inner(&self) -> &i2cdev::linux::LinuxI2CError {
+        &self.err
+    }
+}
+
 impl From<i2cdev::linux::LinuxI2CError> for I2CError {
     fn from(err: i2cdev::linux::LinuxI2CError) -> Self {
         Self { err }
@@ -138,11 +147,24 @@ impl From<i2cdev::linux::LinuxI2CError> for I2CError {
 
 impl embedded_hal::i2c::Error for I2CError {
     fn kind(&self) -> embedded_hal::i2c::ErrorKind {
-        use embedded_hal::i2c::ErrorKind::*;
-        match &self.err {
-            // i2cdev::linux::LinuxI2CError::Nix(_) => todo!(),
-            // i2cdev::linux::LinuxI2CError::Io(_) => todo!(),
-            _ => Other,
+        use embedded_hal::i2c::ErrorKind;
+        use nix::errno::Errno::*;
+
+        let errno = match &self.err {
+            i2cdev::linux::LinuxI2CError::Nix(e) => *e,
+            i2cdev::linux::LinuxI2CError::Io(e) => match e.raw_os_error() {
+                Some(r) => nix::Error::from_i32(r),
+                None => return ErrorKind::Other,
+            },
+        };
+
+        // https://www.kernel.org/doc/html/latest/i2c/fault-codes.html
+        match errno {
+            EBUSY | EINVAL | EIO => ErrorKind::Bus,
+            EAGAIN => ErrorKind::ArbitrationLoss,
+            ENODEV => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Data),
+            ENXIO => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Address),
+            _ => ErrorKind::Other,
         }
     }
 }
