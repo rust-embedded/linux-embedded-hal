@@ -116,6 +116,13 @@ pub struct SPIError {
     err: io::Error,
 }
 
+impl SPIError {
+    /// Fetch inner (concrete) [`LinuxI2CError`]
+    pub fn inner(&self) -> &io::Error {
+        &self.err
+    }
+}
+
 impl From<io::Error> for SPIError {
     fn from(err: io::Error) -> Self {
         Self { err }
@@ -124,50 +131,10 @@ impl From<io::Error> for SPIError {
 
 impl embedded_hal::spi::Error for SPIError {
     fn kind(&self) -> embedded_hal::spi::ErrorKind {
-        use embedded_hal::spi::ErrorKind::*;
+        use embedded_hal::spi::ErrorKind;
         match self.err.kind() {
-            // io::ErrorKind::NotFound => todo!(),
-            // io::ErrorKind::PermissionDenied => todo!(),
-            // io::ErrorKind::ConnectionRefused => todo!(),
-            // io::ErrorKind::ConnectionReset => todo!(),
-            // io::ErrorKind::HostUnreachable => todo!(),
-            // io::ErrorKind::NetworkUnreachable => todo!(),
-            // io::ErrorKind::ConnectionAborted => todo!(),
-            // io::ErrorKind::NotConnected => todo!(),
-            // io::ErrorKind::AddrInUse => todo!(),
-            // io::ErrorKind::AddrNotAvailable => todo!(),
-            // io::ErrorKind::NetworkDown => todo!(),
-            // io::ErrorKind::BrokenPipe => todo!(),
-            // io::ErrorKind::AlreadyExists => todo!(),
-            // io::ErrorKind::WouldBlock => todo!(),
-            // io::ErrorKind::NotADirectory => todo!(),
-            // io::ErrorKind::IsADirectory => todo!(),
-            // io::ErrorKind::DirectoryNotEmpty => todo!(),
-            // io::ErrorKind::ReadOnlyFilesystem => todo!(),
-            // io::ErrorKind::FilesystemLoop => todo!(),
-            // io::ErrorKind::StaleNetworkFileHandle => todo!(),
-            // io::ErrorKind::InvalidInput => todo!(),
-            // io::ErrorKind::InvalidData => todo!(),
-            // io::ErrorKind::TimedOut => todo!(),
-            // io::ErrorKind::WriteZero => todo!(),
-            // io::ErrorKind::StorageFull => todo!(),
-            // io::ErrorKind::NotSeekable => todo!(),
-            // io::ErrorKind::FilesystemQuotaExceeded => todo!(),
-            // io::ErrorKind::FileTooLarge => todo!(),
-            // io::ErrorKind::ResourceBusy => todo!(),
-            // io::ErrorKind::ExecutableFileBusy => todo!(),
-            // io::ErrorKind::Deadlock => todo!(),
-            // io::ErrorKind::CrossesDevices => todo!(),
-            // io::ErrorKind::TooManyLinks => todo!(),
-            // io::ErrorKind::FilenameTooLong => todo!(),
-            // io::ErrorKind::ArgumentListTooLong => todo!(),
-            // io::ErrorKind::Interrupted => todo!(),
-            // io::ErrorKind::Unsupported => todo!(),
-            // io::ErrorKind::UnexpectedEof => todo!(),
-            // io::ErrorKind::OutOfMemory => todo!(),
-            // io::ErrorKind::Other => todo!(),
-            // io::ErrorKind::Uncategorized => todo!(),
-            _ => Other,
+            // TODO: match any errors here if we can find any that are relevant
+            _ => ErrorKind::Other,
         }
     }
 }

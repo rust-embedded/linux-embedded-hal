@@ -28,6 +28,7 @@ nb = "1"
 serial-core = "0.4.0"
 serial-unix = "0.4.0"
 spidev = "0.5.1"
+nix = "0.23.1"
 
 [dev-dependencies]
 openpty = "0.2.0"

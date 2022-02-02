@@ -62,51 +62,18 @@ pub struct SerialError {
     err: IoErrorKind,
 }
 
+impl SerialError {
+    /// Fetch inner (concrete) [`IoErrorKind`]
+    pub fn inner(&self) -> &IoErrorKind {
+        &self.err
+    }
+}
+
 impl embedded_hal::serial::Error for SerialError {
     fn kind(&self) -> embedded_hal::serial::ErrorKind {
         use embedded_hal::serial::ErrorKind::*;
         match &self.err {
-            // IoErrorKind::NotFound => todo!(),
-            // IoErrorKind::PermissionDenied => todo!(),
-            // IoErrorKind::ConnectionRefused => todo!(),
-            // IoErrorKind::ConnectionReset => todo!(),
-            // IoErrorKind::HostUnreachable => todo!(),
-            // IoErrorKind::NetworkUnreachable => todo!(),
-            // IoErrorKind::ConnectionAborted => todo!(),
-            // IoErrorKind::NotConnected => todo!(),
-            // IoErrorKind::AddrInUse => todo!(),
-            // IoErrorKind::AddrNotAvailable => todo!(),
-            // IoErrorKind::NetworkDown => todo!(),
-            // IoErrorKind::BrokenPipe => todo!(),
-            // IoErrorKind::AlreadyExists => todo!(),
-            // IoErrorKind::WouldBlock => todo!(),
-            // IoErrorKind::NotADirectory => todo!(),
-            // IoErrorKind::IsADirectory => todo!(),
-            // IoErrorKind::DirectoryNotEmpty => todo!(),
-            // IoErrorKind::ReadOnlyFilesystem => todo!(),
-            // IoErrorKind::FilesystemLoop => todo!(),
-            // IoErrorKind::StaleNetworkFileHandle => todo!(),
-            // IoErrorKind::InvalidInput => todo!(),
-            // IoErrorKind::InvalidData => todo!(),
-            // IoErrorKind::TimedOut => todo!(),
-            // IoErrorKind::WriteZero => todo!(),
-            // IoErrorKind::StorageFull => todo!(),
-            // IoErrorKind::NotSeekable => todo!(),
-            // IoErrorKind::FilesystemQuotaExceeded => todo!(),
-            // IoErrorKind::FileTooLarge => todo!(),
-            // IoErrorKind::ResourceBusy => todo!(),
-            // IoErrorKind::ExecutableFileBusy => todo!(),
-            // IoErrorKind::Deadlock => todo!(),
-            // IoErrorKind::CrossesDevices => todo!(),
-            // IoErrorKind::TooManyLinks => todo!(),
-            // IoErrorKind::FilenameTooLong => todo!(),
-            // IoErrorKind::ArgumentListTooLong => todo!(),
-            // IoErrorKind::Interrupted => todo!(),
-            // IoErrorKind::Unsupported => todo!(),
-            // IoErrorKind::UnexpectedEof => todo!(),
-            // IoErrorKind::OutOfMemory => todo!(),
-            // IoErrorKind::Other => todo!(),
-            // IoErrorKind::Uncategorized => todo!(),
+            // TODO: match any errors here if we can find any that are relevant
             _ => Other,
         }
     }
