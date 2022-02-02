@@ -20,10 +20,9 @@ async-tokio = ["gpio-cdev/async-tokio"]
 default = [ "gpio_cdev", "gpio_sysfs" ]
 
 [dependencies]
-embedded-hal = "=1.0.0-alpha.5"
+embedded-hal = "=1.0.0-alpha.6"
 gpio-cdev = { version = "0.5.1", optional = true }
 sysfs_gpio = { version = "0.6.1", optional = true }
-
 i2cdev = "0.5.1"
 nb = "1"
 serial-core = "0.4.0"

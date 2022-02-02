@@ -62,25 +62,25 @@ mod embedded_hal_impl {
     use i2cdev::linux::LinuxI2CMessage;
 
     impl Read for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
-            self.inner.read(buffer)
+            self.inner.read(buffer).map_err(|err| I2CError { err })
         }
     }
 
     impl Write for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
-            self.inner.write(bytes)
+            self.inner.write(bytes).map_err(|err| I2CError { err })
         }
     }
 
     impl WriteRead for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn write_read(
             &mut self,
@@ -90,12 +90,15 @@ mod embedded_hal_impl {
         ) -> Result<(), Self::Error> {
             self.set_address(address)?;
             let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
-            self.inner.transfer(&mut messages).map(drop)
+            self.inner
+                .transfer(&mut messages)
+                .map(drop)
+                .map_err(|err| I2CError { err })
         }
     }
 
     impl Transactional for I2cdev {
-        type Error = i2cdev::linux::LinuxI2CError;
+        type Error = I2CError;
 
         fn exec(
             &mut self,
@@ -113,7 +116,33 @@ mod embedded_hal_impl {
                 .collect();
 
             self.set_address(address)?;
-            self.inner.transfer(&mut messages).map(drop)
+            self.inner
+                .transfer(&mut messages)
+                .map(drop)
+                .map_err(|err| I2CError { err })
+        }
+    }
+}
+
+/// Error type wrapping [LinuxI2CError](i2cdev::linux::LinuxI2CError) to implement [embedded_hal::i2c::ErrorKind]
+#[derive(Debug)]
+pub struct I2CError {
+    err: i2cdev::linux::LinuxI2CError,
+}
+
+impl From<i2cdev::linux::LinuxI2CError> for I2CError {
+    fn from(err: i2cdev::linux::LinuxI2CError) -> Self {
+        Self { err }
+    }
+}
+
+impl embedded_hal::i2c::Error for I2CError {
+    fn kind(&self) -> embedded_hal::i2c::ErrorKind {
+        use embedded_hal::i2c::ErrorKind::*;
+        match &self.err {
+            // i2cdev::linux::LinuxI2CError::Nix(_) => todo!(),
+            // i2cdev::linux::LinuxI2CError::Io(_) => todo!(),
+            _ => Other,
         }
     }
 }
