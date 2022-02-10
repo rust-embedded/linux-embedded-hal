@@ -57,32 +57,32 @@ impl ops::DerefMut for I2cdev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::i2c::blocking::{
-        Operation as I2cOperation, Read, Transactional, Write, WriteRead,
-    };
+    use embedded_hal::i2c::blocking::{I2c, Operation as I2cOperation};
+    use embedded_hal::i2c::ErrorType;
     use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
     use i2cdev::linux::LinuxI2CMessage;
-
-    impl Read for I2cdev {
+    impl ErrorType for I2cdev {
         type Error = I2CError;
+    }
 
+    impl I2c for I2cdev {
         fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
             self.inner.read(buffer).map_err(|err| I2CError { err })
         }
-    }
-
-    impl Write for I2cdev {
-        type Error = I2CError;
 
         fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
             self.set_address(address)?;
             self.inner.write(bytes).map_err(|err| I2CError { err })
         }
-    }
 
-    impl WriteRead for I2cdev {
-        type Error = I2CError;
+        fn write_iter<B>(&mut self, address: u8, bytes: B) -> Result<(), Self::Error>
+        where
+            B: IntoIterator<Item = u8>,
+        {
+            let bytes: Vec<_> = bytes.into_iter().collect();
+            self.write(address, &bytes)
+        }
 
         fn write_read(
             &mut self,
@@ -97,12 +97,24 @@ mod embedded_hal_impl {
                 .map(drop)
                 .map_err(|err| I2CError { err })
         }
-    }
 
-    impl Transactional for I2cdev {
-        type Error = I2CError;
+        fn write_iter_read<B>(
+            &mut self,
+            address: u8,
+            bytes: B,
+            buffer: &mut [u8],
+        ) -> Result<(), Self::Error>
+        where
+            B: IntoIterator<Item = u8>,
+        {
+            let bytes: Vec<_> = bytes.into_iter().collect();
+            self.transaction(
+                address,
+                &mut [I2cOperation::Write(&bytes), I2cOperation::Read(buffer)],
+            )
+        }
 
-        fn exec(
+        fn transaction(
             &mut self,
             address: u8,
             operations: &mut [I2cOperation],
@@ -122,6 +134,14 @@ mod embedded_hal_impl {
                 .transfer(&mut messages)
                 .map(drop)
                 .map_err(|err| I2CError { err })
+        }
+
+        fn transaction_iter<'a, O>(&mut self, address: u8, operations: O) -> Result<(), Self::Error>
+        where
+            O: IntoIterator<Item = I2cOperation<'a>>,
+        {
+            let mut ops: Vec<_> = operations.into_iter().collect();
+            self.transaction(address, &mut ops)
         }
     }
 }
