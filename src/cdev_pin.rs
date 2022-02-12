@@ -53,9 +53,11 @@ fn state_to_value(state: embedded_hal::digital::PinState, is_active_low: bool) -
     }
 }
 
-impl embedded_hal::digital::blocking::OutputPin for CdevPin {
+impl embedded_hal::digital::ErrorType for CdevPin {
     type Error = gpio_cdev::errors::Error;
+}
 
+impl embedded_hal::digital::blocking::OutputPin for CdevPin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(state_to_value(
             embedded_hal::digital::PinState::Low,
@@ -72,8 +74,6 @@ impl embedded_hal::digital::blocking::OutputPin for CdevPin {
 }
 
 impl embedded_hal::digital::blocking::InputPin for CdevPin {
-    type Error = gpio_cdev::errors::Error;
-
     fn is_high(&self) -> Result<bool, Self::Error> {
         self.0.get_value().map(|val| {
             val == state_to_value(

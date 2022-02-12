@@ -1,4 +1,4 @@
-use embedded_hal::i2c::blocking::{Operation as I2cOperation, Transactional};
+use embedded_hal::i2c::blocking::{I2c, Operation as I2cOperation};
 use linux_embedded_hal::I2cdev;
 
 const ADDR: u8 = 0x12;
@@ -9,7 +9,7 @@ struct Driver<I2C> {
 
 impl<I2C> Driver<I2C>
 where
-    I2C: Transactional,
+    I2C: I2c,
 {
     pub fn new(i2c: I2C) -> Self {
         Driver { i2c }
@@ -21,7 +21,7 @@ where
             I2cOperation::Write(&[0xAB]),
             I2cOperation::Read(&mut read_buffer),
         ];
-        self.i2c.exec(ADDR, &mut ops).and(Ok(read_buffer[0]))
+        self.i2c.transaction(ADDR, &mut ops).and(Ok(read_buffer[0]))
     }
 }
 

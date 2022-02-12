@@ -49,4 +49,4 @@ pub use crate::delay::Delay;
 pub use crate::i2c::{I2CError, I2cdev};
 pub use crate::serial::{Serial, SerialError};
 pub use crate::spi::{SPIError, Spidev};
-pub use crate::timer::SysTimer;
+pub use crate::timer::{CountDown, Periodic, SysTimer};

@@ -43,12 +43,15 @@ mod embedded_hal_impl {
     use embedded_hal::spi::blocking::{
         Operation as SpiOperation, Transactional, Transfer, TransferInplace, Write,
     };
+    use embedded_hal::spi::ErrorType;
     use spidev::SpidevTransfer;
     use std::io::Write as _;
 
-    impl Transfer<u8> for Spidev {
+    impl ErrorType for Spidev {
         type Error = SPIError;
+    }
 
+    impl Transfer<u8> for Spidev {
         fn transfer<'b>(&mut self, read: &'b mut [u8], write: &[u8]) -> Result<(), Self::Error> {
             self.0
                 .transfer(&mut SpidevTransfer::read_write(&write, read))
@@ -57,8 +60,6 @@ mod embedded_hal_impl {
     }
 
     impl TransferInplace<u8> for Spidev {
-        type Error = SPIError;
-
         fn transfer_inplace<'b>(&mut self, buffer: &'b mut [u8]) -> Result<(), Self::Error> {
             let tx = buffer.to_owned();
             self.0
@@ -68,8 +69,6 @@ mod embedded_hal_impl {
     }
 
     impl Write<u8> for Spidev {
-        type Error = SPIError;
-
         fn write(&mut self, buffer: &[u8]) -> Result<(), Self::Error> {
             self.0.write_all(buffer).map_err(|err| SPIError { err })
         }
@@ -77,8 +76,6 @@ mod embedded_hal_impl {
 
     /// Transactional implementation batches SPI operations into a single transaction
     impl Transactional<u8> for Spidev {
-        type Error = SPIError;
-
         fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
             // Map types from generic to linux objects
             let mut messages: Vec<_> = operations

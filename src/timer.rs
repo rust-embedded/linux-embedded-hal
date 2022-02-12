@@ -5,7 +5,94 @@
 use core::convert::Infallible;
 use std::time::{Duration, Instant};
 
-use embedded_hal::timer::{nb::CountDown, Periodic};
+/// Marker trait that indicates that a timer is periodic
+pub trait Periodic {}
+
+/// A count down timer
+///
+/// Note that this is borrowed from `embedded-hal` 0.2.x and will be in use until the `1.x` version provides one.
+///
+/// # Contract
+///
+/// - `self.start(count); block!(self.wait());` MUST block for AT LEAST the time specified by
+/// `count`.
+///
+/// *Note* that the implementer doesn't necessarily have to be a *downcounting* timer; it could also
+/// be an *upcounting* timer as long as the above contract is upheld.
+///
+/// # Examples
+///
+/// You can use this timer to create delays
+///
+/// ```
+/// use std::time::Duration;
+/// use nb::block;
+/// use linux_embedded_hal::{CountDown, SysTimer};
+///
+/// fn main() {
+///     let mut led: Led = {
+///         // ..
+/// #       Led
+///     };
+///     let mut timer = SysTimer::new();
+///
+///     Led.on();
+///     timer.start(Duration::from_millis(1000)).unwrap();
+///     block!(timer.wait()); // blocks for 1 second
+///     Led.off();
+/// }
+///
+/// # use core::convert::Infallible;
+/// # struct Seconds(u32);
+/// # trait U32Ext { fn s(self) -> Seconds; }
+/// # impl U32Ext for u32 { fn s(self) -> Seconds { Seconds(self) } }
+/// # struct Led;
+/// # impl Led {
+/// #     pub fn off(&mut self) {}
+/// #     pub fn on(&mut self) {}
+/// # }
+/// ```
+pub trait CountDown {
+    /// An enumeration of `CountDown` errors.
+    ///
+    /// For infallible implementations, will be `Infallible`
+    type Error: core::fmt::Debug;
+
+    /// The unit of time used by this timer
+    type Time;
+
+    /// Starts a new count down
+    fn start<T>(&mut self, count: T) -> Result<(), Self::Error>
+    where
+        T: Into<Self::Time>;
+
+    /// Non-blockingly "waits" until the count down finishes
+    ///
+    /// # Contract
+    ///
+    /// - If `Self: Periodic`, the timer will start a new count down right after the last one
+    /// finishes.
+    /// - Otherwise the behavior of calling `wait` after the last call returned `Ok` is UNSPECIFIED.
+    /// Implementers are suggested to panic on this scenario to signal a programmer error.
+    fn wait(&mut self) -> nb::Result<(), Self::Error>;
+}
+
+impl<T: CountDown> CountDown for &mut T {
+    type Error = T::Error;
+
+    type Time = T::Time;
+
+    fn start<TIME>(&mut self, count: TIME) -> Result<(), Self::Error>
+    where
+        TIME: Into<Self::Time>,
+    {
+        T::start(self, count)
+    }
+
+    fn wait(&mut self) -> nb::Result<(), Self::Error> {
+        T::wait(self)
+    }
+}
 
 /// A periodic timer based on [`std::time::Instant`][instant], which is a
 /// monotonically nondecreasing clock.

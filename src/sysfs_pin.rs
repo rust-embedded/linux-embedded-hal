@@ -28,9 +28,11 @@ impl SysfsPin {
     }
 }
 
-impl embedded_hal::digital::blocking::OutputPin for SysfsPin {
+impl embedded_hal::digital::ErrorType for SysfsPin {
     type Error = sysfs_gpio::Error;
+}
 
+impl embedded_hal::digital::blocking::OutputPin for SysfsPin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         if self.0.get_active_low()? {
             self.0.set_value(1)
@@ -49,8 +51,6 @@ impl embedded_hal::digital::blocking::OutputPin for SysfsPin {
 }
 
 impl embedded_hal::digital::blocking::InputPin for SysfsPin {
-    type Error = sysfs_gpio::Error;
-
     fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low()? {
             self.0.get_value().map(|val| val != 0)
