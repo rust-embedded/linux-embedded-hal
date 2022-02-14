@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.0-alpha.2] - 2022-02-15
+
+### Added
+
+- Mappings for `embedded-hal` error kinds
+### Changed
+
+- Updated to `embedded-hal` `1.0.0-alpha.7` release (significant [API changes](https://github.com/rust-embedded/embedded-hal/blob/master/CHANGELOG.md#v100-alpha7---2022-02-09))
+- Updated dependencies to force use of newer nix version
+  - `spidev` to version `0.5.1`
+  - `i2cdev` to version `0.5.1`
+  - `gpio-cdev` to version `0.5.1`
+  - `sysfs_gpio` to version `0.6.1`
 
 ## [v0.4.0-alpha.1] - 2021-10-07
 
