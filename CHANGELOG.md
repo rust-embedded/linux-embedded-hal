@@ -42,6 +42,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated `sysfs_gpio` to version `0.6`.
 - Updated `nb` to version `1`.
 
+## [v0.3.2] - 2021-10-25
+
+### Fixed
+- Readd `Pin` type export as an alias to `SysfsPin` for compatibility with the `0.3.0` version.
+
+## [v0.3.1] - 2021-09-27
+### Added
+
+- Added implementation of transactional SPI and I2C traits.
+- `CountDown` implementation for `SysTimer`.
+- `Default` implementation for `SysTimer`.
+
+### Changed
+
+- Set default features to build both sysfs and cdev pin types.
+- Removed `Pin` export, use `CdevPin` or `SysfsPin`.
+- Updated `embedded-hal` to version `0.2.6`.
+- Updated `nb` to version `0.1.3`.
+- Updated `gpio-cdev` to version `0.5`.
+- Updated `i2cdev` to version `0.5`.
+- Updated `spidev` to version `0.5`.
+- Updated `sysfs-gpio` to version `0.6`.
+- Updated `cast` to version `0.3`.
+
+### Fixed
+
+- Modified `OutputPin` behavior for active-low pins to match `InputPin` behavior.
+
 ## [v0.3.0] - 2019-11-25
 
 ### Added
@@ -92,8 +120,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.1...HEAD
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...HEAD
+[v0.4.0-alpha.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.1
 [v0.4.0-alpha.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.4.0-alpha.1
+[v0.3.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.1...v0.3.2
+[v0.3.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.2.2...v0.3.0
 [v0.2.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.2.1...v0.2.2
 [v0.2.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.2.0...v0.2.1
