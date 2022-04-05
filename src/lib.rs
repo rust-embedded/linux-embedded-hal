@@ -12,10 +12,12 @@
 
 #![deny(missing_docs)]
 
+#[cfg(feature = "i2c")]
 pub use i2cdev;
 pub use nb;
 pub use serial_core;
 pub use serial_unix;
+#[cfg(feature = "spi")]
 pub use spidev;
 
 #[cfg(feature = "gpio_sysfs")]
@@ -40,13 +42,17 @@ pub use cdev_pin::CdevPin;
 pub use sysfs_pin::SysfsPin;
 
 mod delay;
+#[cfg(feature = "i2c")]
 mod i2c;
 mod serial;
+#[cfg(feature = "spi")]
 mod spi;
 mod timer;
 
 pub use crate::delay::Delay;
+#[cfg(feature = "i2c")]
 pub use crate::i2c::{I2CError, I2cdev};
 pub use crate::serial::{Serial, SerialError};
+#[cfg(feature = "spi")]
 pub use crate::spi::{SPIError, Spidev};
 pub use crate::timer::{CountDown, Periodic, SysTimer};

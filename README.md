@@ -25,6 +25,8 @@ linux-embedded-hal = { version = "0.3", features = ["gpio_cdev"] }
 
 `SysfsPin` can be still used with feature flag `gpio_sysfs`.
 
+With `default-features = false` you can enable the features `gpio_cdev`, `gpio_sysfs`, `i2c`, and `spi` as needed.
+
 ## Minimum Supported Rust Version (MSRV)
 
 This crate is guaranteed to compile on stable Rust 1.46.0 and up. It *might*
