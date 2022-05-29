@@ -40,69 +40,58 @@ impl ops::DerefMut for Spidev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::spi::blocking::{
-        Operation as SpiOperation, Transactional, Transfer, TransferInplace, Write,
-    };
+    use embedded_hal::spi::blocking::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice};
     use embedded_hal::spi::ErrorType;
     use spidev::SpidevTransfer;
-    use std::io::Write as _;
+    use std::io::{Read, Write};
 
     impl ErrorType for Spidev {
         type Error = SPIError;
     }
 
-    impl Transfer<u8> for Spidev {
-        fn transfer<'b>(&mut self, read: &'b mut [u8], write: &[u8]) -> Result<(), Self::Error> {
+    impl SpiBusFlush for Spidev {
+        fn flush(&mut self) -> Result<(), Self::Error> {
+            self.0.flush().map_err(|err| SPIError { err })
+        }
+    }
+
+    impl SpiBusRead<u8> for Spidev {
+        fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+            self.0.read_exact(words).map_err(|err| SPIError { err })
+        }
+    }
+
+    impl SpiBusWrite<u8> for Spidev {
+        fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+            self.0.write_all(words).map_err(|err| SPIError { err })
+        }
+    }
+
+    impl SpiBus<u8> for Spidev {
+        fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
             self.0
-                .transfer(&mut SpidevTransfer::read_write(&write, read))
+                .transfer(&mut SpidevTransfer::read_write(write, read))
+                .map_err(|err| SPIError { err })
+        }
+
+        fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+            let tx = words.to_owned();
+            self.0
+                .transfer(&mut SpidevTransfer::read_write(&tx, words))
                 .map_err(|err| SPIError { err })
         }
     }
 
-    impl TransferInplace<u8> for Spidev {
-        fn transfer_inplace<'b>(&mut self, buffer: &'b mut [u8]) -> Result<(), Self::Error> {
-            let tx = buffer.to_owned();
-            self.0
-                .transfer(&mut SpidevTransfer::read_write(&tx, buffer))
-                .map_err(|err| SPIError { err })
-        }
-    }
+    impl SpiDevice for Spidev {
+        type Bus = Spidev;
 
-    impl Write<u8> for Spidev {
-        fn write(&mut self, buffer: &[u8]) -> Result<(), Self::Error> {
-            self.0.write_all(buffer).map_err(|err| SPIError { err })
-        }
-    }
-
-    /// Transactional implementation batches SPI operations into a single transaction
-    impl Transactional<u8> for Spidev {
-        fn exec<'a>(&mut self, operations: &mut [SpiOperation<'a, u8>]) -> Result<(), Self::Error> {
-            // Map types from generic to linux objects
-            let mut messages: Vec<_> = operations
-                .iter_mut()
-                .map(|a| {
-                    match a {
-                        SpiOperation::Read(w) => SpidevTransfer::read(w),
-                        SpiOperation::Write(w) => SpidevTransfer::write(w),
-                        SpiOperation::Transfer(r, w) => SpidevTransfer::read_write(w, r),
-                        SpiOperation::TransferInplace(r) => {
-                            // Clone read to write pointer
-                            // SPIdev is okay with having w == r but this is tricky to achieve in safe rust
-                            let w = unsafe {
-                                let p = r.as_ptr();
-                                std::slice::from_raw_parts(p, r.len())
-                            };
-
-                            SpidevTransfer::read_write(w, r)
-                        }
-                    }
-                })
-                .collect();
-
-            // Execute transfer
-            self.0
-                .transfer_multiple(&mut messages)
-                .map_err(|err| SPIError { err })
+        fn transaction<R>(
+            &mut self,
+            f: impl FnOnce(&mut Self::Bus) -> Result<R, <Self::Bus as ErrorType>::Error>,
+        ) -> Result<R, Self::Error> {
+            let result = f(self)?;
+            self.flush()?;
+            Ok(result)
         }
     }
 }

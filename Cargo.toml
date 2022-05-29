@@ -22,7 +22,7 @@ spi = ["spidev"]
 default = [ "gpio_cdev", "gpio_sysfs", "i2c", "spi" ]
 
 [dependencies]
-embedded-hal = "=1.0.0-alpha.7"
+embedded-hal = "=1.0.0-alpha.8"
 gpio-cdev = { version = "0.5.1", optional = true }
 sysfs_gpio = { version = "0.6.1", optional = true }
 i2cdev = { version = "0.5.1", optional = true }
