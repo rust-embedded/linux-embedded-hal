@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Added feature flag for `spi` and `i2c`
 
+### Changed
+
+- Updated to `embedded-hal` `1.0.0-alpha.8` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/CHANGELOG.md#v100-alpha8---2022-04-15))
+
 ## [v0.4.0-alpha.2] - 2022-02-15
 
 ### Added
