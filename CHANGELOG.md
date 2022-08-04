@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.0-alpha.3] - 2022-08-04
+
 ### Added
 
 - Added feature flag for `spi` and `i2c`
@@ -128,8 +130,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...HEAD
-[v0.4.0-alpha.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.1
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...HEAD
+[v0.4.0-alpha.3]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
+[v0.4.0-alpha.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.1...v0.4.0-alpha.2
 [v0.4.0-alpha.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.4.0-alpha.1
 [v0.3.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.1...v0.3.2
 [v0.3.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.3.1
