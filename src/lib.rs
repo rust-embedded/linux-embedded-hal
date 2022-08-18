@@ -51,7 +51,7 @@ mod timer;
 
 pub use crate::delay::Delay;
 #[cfg(feature = "i2c")]
-pub use crate::i2c::{I2CError, I2cdev};
+pub use crate::i2c::{I2cBus, I2cError};
 pub use crate::serial::{Serial, SerialError};
 #[cfg(feature = "spi")]
 pub use crate::spi::{SPIError, Spidev};

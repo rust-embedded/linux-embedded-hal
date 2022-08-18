@@ -2,189 +2,227 @@
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
+use std::marker::PhantomData;
 use std::ops;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use embedded_hal::i2c::NoAcknowledgeSource;
+use embedded_hal::i2c::Direction;
+use i2cdev::linux::{LinuxI2CBus, LinuxI2CError, LinuxI2CMessage};
 
-/// Newtype around [`i2cdev::linux::LinuxI2CDevice`] that implements the `embedded-hal` traits
-///
-/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html
-pub struct I2cdev {
-    inner: i2cdev::linux::LinuxI2CDevice,
-    path: PathBuf,
-    address: Option<u8>,
+/// Error type
+#[derive(Debug)]
+pub enum I2cError {
+    /// Error coming from the Linux kernel.
+    Linux(i2cdev::linux::LinuxI2CError),
+    /// Invalid transaction.
+    ///
+    /// Possibly a transaction was attempted but it had not been properly started or stopped.
+    InvalidTransaction,
+    /// Wrong operation.
+    ///
+    /// This may happen if a stop is issued without a previous transaction.
+    WrongOperation,
+    /// Internal error.
+    ///
+    /// There is an error in this crate. Please report it.
+    InternalError,
 }
 
-impl I2cdev {
+/// I2C bus type that implements the `embedded-hal` traits
+///
+/// [`i2cdev::linux::LinuxI2CDevice`]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html
+pub struct I2cBus<'a> {
+    bus: LinuxI2CBus,
+    started_transaction: Option<(u16, bool, Direction)>,
+    last_transaction: Option<(u16, bool, Direction)>,
+    pending_transactions: Vec<LinuxI2CMessage<'a>>,
+    _lifetime: PhantomData<&'a LinuxI2CMessage<'a>>,
+}
+
+impl<'a> I2cBus<'a> {
     /// See [`i2cdev::linux::LinuxI2CDevice::new`][0] for details.
     ///
     /// [0]: https://docs.rs/i2cdev/0.5.0/i2cdev/linux/struct.LinuxI2CDevice.html#method.new
-    pub fn new<P>(path: P) -> Result<Self, i2cdev::linux::LinuxI2CError>
+    pub fn new<P>(path: P) -> Result<Self, I2cError>
     where
         P: AsRef<Path>,
     {
-        let dev = I2cdev {
-            path: path.as_ref().to_path_buf(),
-            inner: i2cdev::linux::LinuxI2CDevice::new(path, 0)?,
-            address: None,
+        let dev = Self {
+            bus: LinuxI2CBus::new(path).map_err(I2cError::Linux)?,
+            started_transaction: None,
+            last_transaction: None,
+            pending_transactions: vec![],
+            _lifetime: PhantomData,
         };
         Ok(dev)
     }
 
-    fn set_address(&mut self, address: u8) -> Result<(), i2cdev::linux::LinuxI2CError> {
-        if self.address != Some(address) {
-            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, u16::from(address))?;
-            self.address = Some(address);
-        }
-        Ok(())
+    fn start_transaction(&mut self, address: u16, is_ten_bit_addr: bool, direction: Direction) {
+        self.started_transaction = Some((address, is_ten_bit_addr, direction));
     }
 }
 
-impl ops::Deref for I2cdev {
-    type Target = i2cdev::linux::LinuxI2CDevice;
+impl<'a> ops::Deref for I2cBus<'a> {
+    type Target = LinuxI2CBus;
 
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        &self.bus
     }
 }
 
-impl ops::DerefMut for I2cdev {
+impl<'a> ops::DerefMut for I2cBus<'a> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
+        &mut self.bus
+    }
+}
+
+impl From<LinuxI2CError> for I2cError {
+    fn from(err: LinuxI2CError) -> Self {
+        Self::Linux(err)
     }
 }
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::i2c::blocking::{I2c, Operation as I2cOperation};
-    use embedded_hal::i2c::ErrorType;
-    use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
-    use i2cdev::linux::LinuxI2CMessage;
-    impl ErrorType for I2cdev {
-        type Error = I2CError;
+    use embedded_hal::i2c::{
+        blocking::{I2cBus as EhI2cBus, I2cBusBase},
+        ErrorKind, ErrorType, NoAcknowledgeSource, SevenBitAddress, TenBitAddress,
+    };
+    use i2cdev::core::{I2CMessage, I2CTransfer};
+    use i2cdev::linux::{I2CMessageFlags, LinuxI2CMessage};
+
+    impl<'a> ErrorType for I2cBus<'a> {
+        type Error = I2cError;
     }
 
-    impl I2c for I2cdev {
-        fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
-            self.set_address(address)?;
-            self.inner.read(buffer).map_err(|err| I2CError { err })
+    impl<'a> I2cBusBase for I2cBus<'a> {
+        fn read(&mut self, buffer: &mut [u8]) -> Result<(), Self::Error> {
+            let address;
+            let is_ten_bit;
+            let mut flags = I2CMessageFlags::empty();
+            if let Some((addr, ten_bit, direction)) = self.started_transaction {
+                address = addr;
+                is_ten_bit = ten_bit;
+                match direction {
+                    Direction::Read => (), // start is automatically sent
+                    Direction::Write => return Err(I2cError::InvalidTransaction), // write transaction was started but a read was issued.
+                }
+            } else if let Some((addr, ten_bit, direction)) = self.last_transaction {
+                address = addr;
+                is_ten_bit = ten_bit;
+                match direction {
+                    Direction::Read => flags |= I2CMessageFlags::NO_START, // same-direction transactions back-to-back
+                    Direction::Write => (), // restart is automatically sent
+                }
+            } else {
+                return Err(I2cError::InvalidTransaction); // first transaction but start was not called.
+            }
+
+            if is_ten_bit {
+                flags |= I2CMessageFlags::TEN_BIT_ADDRESS;
+            }
+            let msg = LinuxI2CMessage::read(buffer)
+                .with_address(address)
+                .with_flags(flags | I2CMessageFlags::READ);
+            self.last_transaction = Some((address, is_ten_bit, Direction::Write));
+            self.pending_transactions.push(msg);
+            self.started_transaction = None;
+            Ok(())
         }
 
-        fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-            self.set_address(address)?;
-            self.inner.write(bytes).map_err(|err| I2CError { err })
+        fn write(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
+            let address;
+            let is_ten_bit;
+            let mut flags = I2CMessageFlags::empty();
+            if let Some((addr, ten_bit, direction)) = self.started_transaction {
+                address = addr;
+                is_ten_bit = ten_bit;
+                match direction {
+                    Direction::Write => (), // start is automatically sent
+                    Direction::Read => return Err(I2cError::InvalidTransaction), // read transaction was started but a write was issued.
+                }
+            } else if let Some((addr, ten_bit, direction)) = self.last_transaction {
+                address = addr;
+                is_ten_bit = ten_bit;
+                match direction {
+                    Direction::Write => flags |= I2CMessageFlags::NO_START, // same-direction transactions back-to-back
+                    Direction::Read => (), // restart is automatically sent
+                }
+            } else {
+                return Err(I2cError::InvalidTransaction); // first transaction but start was not called.
+            }
+            if is_ten_bit {
+                flags |= I2CMessageFlags::TEN_BIT_ADDRESS;
+            }
+            let msg = LinuxI2CMessage::write(bytes)
+                .with_address(address)
+                .with_flags(flags);
+            self.last_transaction = Some((address, is_ten_bit, Direction::Write));
+            self.pending_transactions.push(msg);
+            self.started_transaction = None;
+            Ok(())
         }
 
-        fn write_iter<B>(&mut self, address: u8, bytes: B) -> Result<(), Self::Error>
-        where
-            B: IntoIterator<Item = u8>,
-        {
-            let bytes: Vec<_> = bytes.into_iter().collect();
-            self.write(address, &bytes)
+        fn stop(&mut self) -> Result<(), Self::Error> {
+            self.bus.transfer(&mut self.pending_transactions)?; // a stop at the end is automatically sent
+            self.pending_transactions.clear();
+            self.started_transaction = None;
+            self.last_transaction = None;
+            Ok(())
         }
 
-        fn write_read(
+        fn flush(&mut self) -> Result<(), Self::Error> {
+            Ok(())
+        }
+    }
+
+    impl<'a> EhI2cBus<SevenBitAddress> for I2cBus<'a> {
+        fn start(
             &mut self,
-            address: u8,
-            bytes: &[u8],
-            buffer: &mut [u8],
+            address: SevenBitAddress,
+            direction: embedded_hal::i2c::Direction,
         ) -> Result<(), Self::Error> {
-            self.set_address(address)?;
-            let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
-            self.inner
-                .transfer(&mut messages)
-                .map(drop)
-                .map_err(|err| I2CError { err })
+            self.start_transaction(u16::from(address), false, direction);
+            Ok(())
         }
+    }
 
-        fn write_iter_read<B>(
+    impl<'a> EhI2cBus<TenBitAddress> for I2cBus<'a> {
+        fn start(
             &mut self,
-            address: u8,
-            bytes: B,
-            buffer: &mut [u8],
-        ) -> Result<(), Self::Error>
-        where
-            B: IntoIterator<Item = u8>,
-        {
-            let bytes: Vec<_> = bytes.into_iter().collect();
-            self.transaction(
-                address,
-                &mut [I2cOperation::Write(&bytes), I2cOperation::Read(buffer)],
-            )
-        }
-
-        fn transaction(
-            &mut self,
-            address: u8,
-            operations: &mut [I2cOperation],
+            address: TenBitAddress,
+            direction: embedded_hal::i2c::Direction,
         ) -> Result<(), Self::Error> {
-            // Map operations from generic to linux objects
-            let mut messages: Vec<_> = operations
-                .as_mut()
-                .iter_mut()
-                .map(|a| match a {
-                    I2cOperation::Write(w) => LinuxI2CMessage::write(w),
-                    I2cOperation::Read(r) => LinuxI2CMessage::read(r),
-                })
-                .collect();
-
-            self.set_address(address)?;
-            self.inner
-                .transfer(&mut messages)
-                .map(drop)
-                .map_err(|err| I2CError { err })
-        }
-
-        fn transaction_iter<'a, O>(&mut self, address: u8, operations: O) -> Result<(), Self::Error>
-        where
-            O: IntoIterator<Item = I2cOperation<'a>>,
-        {
-            let mut ops: Vec<_> = operations.into_iter().collect();
-            self.transaction(address, &mut ops)
+            self.start_transaction(address, true, direction);
+            Ok(())
         }
     }
-}
 
-/// Error type wrapping [LinuxI2CError](i2cdev::linux::LinuxI2CError) to implement [embedded_hal::i2c::ErrorKind]
-#[derive(Debug)]
-pub struct I2CError {
-    err: i2cdev::linux::LinuxI2CError,
-}
+    impl embedded_hal::i2c::Error for I2cError {
+        fn kind(&self) -> ErrorKind {
+            use nix::errno::Errno::*;
 
-impl I2CError {
-    /// Fetch inner (concrete) [`LinuxI2CError`]
-    pub fn inner(&self) -> &i2cdev::linux::LinuxI2CError {
-        &self.err
-    }
-}
+            match &self {
+                Self::Linux(err) => {
+                    let errno = match &err {
+                        i2cdev::linux::LinuxI2CError::Nix(e) => *e,
+                        i2cdev::linux::LinuxI2CError::Io(e) => match e.raw_os_error() {
+                            Some(r) => nix::Error::from_i32(r),
+                            None => return ErrorKind::Other,
+                        },
+                    };
 
-impl From<i2cdev::linux::LinuxI2CError> for I2CError {
-    fn from(err: i2cdev::linux::LinuxI2CError) -> Self {
-        Self { err }
-    }
-}
-
-impl embedded_hal::i2c::Error for I2CError {
-    fn kind(&self) -> embedded_hal::i2c::ErrorKind {
-        use embedded_hal::i2c::ErrorKind;
-        use nix::errno::Errno::*;
-
-        let errno = match &self.err {
-            i2cdev::linux::LinuxI2CError::Nix(e) => *e,
-            i2cdev::linux::LinuxI2CError::Io(e) => match e.raw_os_error() {
-                Some(r) => nix::Error::from_i32(r),
-                None => return ErrorKind::Other,
-            },
-        };
-
-        // https://www.kernel.org/doc/html/latest/i2c/fault-codes.html
-        match errno {
-            EBUSY | EINVAL | EIO => ErrorKind::Bus,
-            EAGAIN => ErrorKind::ArbitrationLoss,
-            ENODEV => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Data),
-            ENXIO => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Address),
-            _ => ErrorKind::Other,
+                    // https://www.kernel.org/doc/html/latest/i2c/fault-codes.html
+                    match errno {
+                        EBUSY | EINVAL | EIO => ErrorKind::Bus,
+                        EAGAIN => ErrorKind::ArbitrationLoss,
+                        ENODEV => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Data),
+                        ENXIO => ErrorKind::NoAcknowledge(NoAcknowledgeSource::Address),
+                        _ => ErrorKind::Other,
+                    }
+                }
+                _ => ErrorKind::Other,
+            }
         }
     }
 }
