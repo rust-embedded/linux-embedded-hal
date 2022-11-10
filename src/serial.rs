@@ -33,7 +33,8 @@ impl embedded_hal::serial::ErrorType for Serial {
     type Error = SerialError;
 }
 
-impl embedded_hal::serial::nb::Read<u8> for Serial {
+
+impl embedded_hal_nb::serial::Read<u8> for Serial {
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
         let mut buffer = [0; 1];
         let bytes_read = self.0.read(&mut buffer).map_err(translate_io_errors)?;
@@ -45,7 +46,7 @@ impl embedded_hal::serial::nb::Read<u8> for Serial {
     }
 }
 
-impl embedded_hal::serial::nb::Write<u8> for Serial {
+impl embedded_hal_nb::serial::Write<u8> for Serial {
     fn write(&mut self, word: u8) -> nb::Result<(), Self::Error> {
         self.0.write(&[word]).map_err(translate_io_errors)?;
         Ok(())
@@ -83,7 +84,7 @@ impl embedded_hal::serial::Error for SerialError {
 mod test {
     use std::path::Path;
 
-    use embedded_hal::serial::nb::{Read, Write};
+    use embedded_hal_nb::serial::{Read, Write};
     use std::io::{Read as IoRead, Write as IoWrite};
 
     use super::*;

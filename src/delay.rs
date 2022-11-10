@@ -4,7 +4,7 @@
 
 use cast::u64;
 use core::convert::Infallible;
-use embedded_hal::delay::blocking::DelayUs;
+use embedded_hal::delay::DelayUs;
 use std::thread;
 use std::time::Duration;
 

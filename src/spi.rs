@@ -40,7 +40,7 @@ impl ops::DerefMut for Spidev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::spi::blocking::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice};
+    use embedded_hal::spi::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice};
     use embedded_hal::spi::ErrorType;
     use spidev::SpidevTransfer;
     use std::io::{Read, Write};

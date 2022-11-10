@@ -1,4 +1,4 @@
-use embedded_hal::i2c::blocking::{I2c, Operation as I2cOperation};
+use embedded_hal::i2c::{I2c, Operation as I2cOperation};
 use linux_embedded_hal::I2cdev;
 
 const ADDR: u8 = 0x12;

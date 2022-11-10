@@ -26,13 +26,31 @@ impl SysfsPin {
     {
         sysfs_gpio::Pin::from_path(path).map(SysfsPin)
     }
+
+    /// Convert this pin to an input pin
+    pub fn into_input_pin(self) -> Result<SysfsPin, sysfs_gpio::Error> {
+        self.set_direction(sysfs_gpio::Direction::In)?;
+        Ok(self)
+    }
+
+    /// Convert this pin to an output pin
+    pub fn into_output_pin(
+        self,
+        state: embedded_hal::digital::PinState,
+    ) -> Result<SysfsPin, sysfs_gpio::Error> {
+        self.set_direction(match state {
+            embedded_hal::digital::PinState::High => sysfs_gpio::Direction::High,
+            embedded_hal::digital::PinState::Low => sysfs_gpio::Direction::Low,
+        })?;
+        Ok(self)
+    }
 }
 
 impl embedded_hal::digital::ErrorType for SysfsPin {
     type Error = sysfs_gpio::Error;
 }
 
-impl embedded_hal::digital::blocking::OutputPin for SysfsPin {
+impl embedded_hal::digital::OutputPin for SysfsPin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         if self.0.get_active_low()? {
             self.0.set_value(1)
@@ -50,7 +68,7 @@ impl embedded_hal::digital::blocking::OutputPin for SysfsPin {
     }
 }
 
-impl embedded_hal::digital::blocking::InputPin for SysfsPin {
+impl embedded_hal::digital::InputPin for SysfsPin {
     fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low()? {
             self.0.get_value().map(|val| val != 0)
@@ -61,26 +79,6 @@ impl embedded_hal::digital::blocking::InputPin for SysfsPin {
 
     fn is_low(&self) -> Result<bool, Self::Error> {
         self.is_high().map(|val| !val)
-    }
-}
-
-impl embedded_hal::digital::blocking::IoPin<SysfsPin, SysfsPin> for SysfsPin {
-    type Error = sysfs_gpio::Error;
-
-    fn into_input_pin(self) -> Result<SysfsPin, Self::Error> {
-        self.set_direction(sysfs_gpio::Direction::In)?;
-        Ok(self)
-    }
-
-    fn into_output_pin(
-        self,
-        state: embedded_hal::digital::PinState,
-    ) -> Result<SysfsPin, Self::Error> {
-        self.set_direction(match state {
-            embedded_hal::digital::PinState::High => sysfs_gpio::Direction::High,
-            embedded_hal::digital::PinState::Low => sysfs_gpio::Direction::Low,
-        })?;
-        Ok(self)
     }
 }
 
