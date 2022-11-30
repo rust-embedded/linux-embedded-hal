@@ -35,6 +35,47 @@ impl CdevPin {
         }
         return flags;
     }
+
+    /// Set this pin to input mode
+    pub fn into_input_pin(self) -> Result<CdevPin, gpio_cdev::errors::Error> {
+        if self.1.direction() == gpio_cdev::LineDirection::In {
+            return Ok(self);
+        }
+        let line = self.0.line().clone();
+        let input_flags = self.get_input_flags();
+        let consumer = self.1.consumer().unwrap_or("").to_owned();
+
+        // Drop self to free the line before re-requesting it in a new mode.
+        std::mem::drop(self);
+
+        CdevPin::new(line.request(input_flags, 0, &consumer)?)
+    }
+
+    /// Set this pin to output mode
+    pub fn into_output_pin(
+        self,
+        state: embedded_hal::digital::PinState,
+    ) -> Result<CdevPin, gpio_cdev::errors::Error> {
+        if self.1.direction() == gpio_cdev::LineDirection::Out {
+            return Ok(self);
+        }
+
+        let line = self.0.line().clone();
+        let output_flags = self.get_output_flags();
+        let consumer = self.1.consumer().unwrap_or("").to_owned();
+
+        // Drop self to free the line before re-requesting it in a new mode.
+        std::mem::drop(self);
+
+        CdevPin::new(line.request(
+            output_flags,
+            state_to_value(
+                state,
+                output_flags.intersects(gpio_cdev::LineRequestFlags::ACTIVE_LOW),
+            ),
+            &consumer,
+        )?)
+    }
 }
 
 /// Converts a pin state to the gpio_cdev compatible numeric value, accounting
@@ -57,7 +98,7 @@ impl embedded_hal::digital::ErrorType for CdevPin {
     type Error = gpio_cdev::errors::Error;
 }
 
-impl embedded_hal::digital::blocking::OutputPin for CdevPin {
+impl embedded_hal::digital::OutputPin for CdevPin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(state_to_value(
             embedded_hal::digital::PinState::Low,
@@ -73,7 +114,7 @@ impl embedded_hal::digital::blocking::OutputPin for CdevPin {
     }
 }
 
-impl embedded_hal::digital::blocking::InputPin for CdevPin {
+impl embedded_hal::digital::InputPin for CdevPin {
     fn is_high(&self) -> Result<bool, Self::Error> {
         self.0.get_value().map(|val| {
             val == state_to_value(
@@ -85,49 +126,6 @@ impl embedded_hal::digital::blocking::InputPin for CdevPin {
 
     fn is_low(&self) -> Result<bool, Self::Error> {
         self.is_high().map(|val| !val)
-    }
-}
-
-impl embedded_hal::digital::blocking::IoPin<CdevPin, CdevPin> for CdevPin {
-    type Error = gpio_cdev::errors::Error;
-
-    fn into_input_pin(self) -> Result<CdevPin, Self::Error> {
-        if self.1.direction() == gpio_cdev::LineDirection::In {
-            return Ok(self);
-        }
-        let line = self.0.line().clone();
-        let input_flags = self.get_input_flags();
-        let consumer = self.1.consumer().unwrap_or("").to_owned();
-
-        // Drop self to free the line before re-requesting it in a new mode.
-        std::mem::drop(self);
-
-        CdevPin::new(line.request(input_flags, 0, &consumer)?)
-    }
-
-    fn into_output_pin(
-        self,
-        state: embedded_hal::digital::PinState,
-    ) -> Result<CdevPin, Self::Error> {
-        if self.1.direction() == gpio_cdev::LineDirection::Out {
-            return Ok(self);
-        }
-
-        let line = self.0.line().clone();
-        let output_flags = self.get_output_flags();
-        let consumer = self.1.consumer().unwrap_or("").to_owned();
-
-        // Drop self to free the line before re-requesting it in a new mode.
-        std::mem::drop(self);
-
-        CdevPin::new(line.request(
-            output_flags,
-            state_to_value(
-                state,
-                output_flags.intersects(gpio_cdev::LineRequestFlags::ACTIVE_LOW),
-            ),
-            &consumer,
-        )?)
     }
 }
 
