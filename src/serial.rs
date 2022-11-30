@@ -33,7 +33,6 @@ impl embedded_hal::serial::ErrorType for Serial {
     type Error = SerialError;
 }
 
-
 impl embedded_hal_nb::serial::Read<u8> for Serial {
     fn read(&mut self) -> nb::Result<u8, Self::Error> {
         let mut buffer = [0; 1];

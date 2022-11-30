@@ -57,8 +57,8 @@ impl ops::DerefMut for I2cdev {
 
 mod embedded_hal_impl {
     use super::*;
-    use embedded_hal::i2c::{I2c, Operation as I2cOperation};
     use embedded_hal::i2c::ErrorType;
+    use embedded_hal::i2c::{I2c, Operation as I2cOperation};
     use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
     use i2cdev::linux::LinuxI2CMessage;
     impl ErrorType for I2cdev {
