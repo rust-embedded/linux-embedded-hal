@@ -15,8 +15,7 @@
 #[cfg(feature = "i2c")]
 pub use i2cdev;
 pub use nb;
-pub use serial_core;
-pub use serial_unix;
+pub use serialport;
 #[cfg(feature = "spi")]
 pub use spidev;
 

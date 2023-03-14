@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- [breaking-change] Replace serial-rs with the serialport-rs crate.
+
 ## [v0.4.0-alpha.3] - 2022-08-04
 
 ### Added
