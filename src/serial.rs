@@ -3,19 +3,22 @@
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use nb;
-use serial_core;
-use serial_unix::TTYPort;
+use serialport::{SerialPortBuilder, TTYPort};
 use std::io::{ErrorKind as IoErrorKind, Read, Write};
-use std::path::Path;
 
-/// Newtype around [`serial_unix::TTYPort`] that implements
+/// Newtype around [`serialport::TTYPort`] that implements
 /// the `embedded-hal` traits.
 pub struct Serial(pub TTYPort);
 
 impl Serial {
-    /// Wrapper for `serial_unix::TTYPort::open`
-    pub fn open(path: impl AsRef<Path>) -> Result<Serial, serial_core::Error> {
-        Ok(Serial(TTYPort::open(path.as_ref())?))
+    /// Open a `serialport::TTYPort` by providing the port path and baud rate
+    pub fn open(path: String, baud_rate: u32) -> Result<Serial, serialport::Error> {
+        Ok(Serial(serialport::new(path, baud_rate).open_native()?))
+    }
+
+    /// Open a `serialport::TTYPort` by providing `serialport::SerialPortBuilder`
+    pub fn open_from_builder(builder: SerialPortBuilder) -> Result<Serial, serialport::Error> {
+        Ok(Serial(builder.open_native()?))
     }
 }
 
@@ -81,8 +84,6 @@ impl embedded_hal::serial::Error for SerialError {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
-
     use embedded_hal_nb::serial::{Read, Write};
     use std::io::{Read as IoRead, Write as IoWrite};
 
@@ -91,8 +92,16 @@ mod test {
     fn create_pty_and_serial() -> (std::fs::File, Serial) {
         let (master, _slave, name) =
             openpty::openpty(None, None, None).expect("Creating pty failed");
-        let serial = Serial::open(Path::new(&name)).expect("Creating TTYPort failed");
+        let serial = Serial::open(name, 9600).expect("Creating TTYPort failed");
         (master, serial)
+    }
+
+    #[test]
+    fn create_serial_from_builder() {
+        let (_master, _slave, name) =
+            openpty::openpty(None, None, None).expect("Creating pty failed");
+        let builder = serialport::new(name, 9600);
+        let _serial = Serial::open_from_builder(builder).expect("Creating TTYPort failed");
     }
 
     #[test]

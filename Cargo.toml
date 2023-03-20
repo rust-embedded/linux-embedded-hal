@@ -28,8 +28,7 @@ gpio-cdev = { version = "0.5.1", optional = true }
 sysfs_gpio = { version = "0.6.1", optional = true }
 i2cdev = { version = "0.5.1", optional = true }
 nb = "1"
-serial-core = "0.4.0"
-serial-unix = "0.4.0"
+serialport = { version = "4.2.0", default-features = false }
 spidev = { version = "0.5.1", optional = true }
 nix = "0.23.1"
 
