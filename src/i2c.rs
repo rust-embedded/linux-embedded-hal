@@ -76,14 +76,6 @@ mod embedded_hal_impl {
             self.inner.write(bytes).map_err(|err| I2CError { err })
         }
 
-        fn write_iter<B>(&mut self, address: u8, bytes: B) -> Result<(), Self::Error>
-        where
-            B: IntoIterator<Item = u8>,
-        {
-            let bytes: Vec<_> = bytes.into_iter().collect();
-            self.write(address, &bytes)
-        }
-
         fn write_read(
             &mut self,
             address: u8,
@@ -96,22 +88,6 @@ mod embedded_hal_impl {
                 .transfer(&mut messages)
                 .map(drop)
                 .map_err(|err| I2CError { err })
-        }
-
-        fn write_iter_read<B>(
-            &mut self,
-            address: u8,
-            bytes: B,
-            buffer: &mut [u8],
-        ) -> Result<(), Self::Error>
-        where
-            B: IntoIterator<Item = u8>,
-        {
-            let bytes: Vec<_> = bytes.into_iter().collect();
-            self.transaction(
-                address,
-                &mut [I2cOperation::Write(&bytes), I2cOperation::Read(buffer)],
-            )
         }
 
         fn transaction(
@@ -134,14 +110,6 @@ mod embedded_hal_impl {
                 .transfer(&mut messages)
                 .map(drop)
                 .map_err(|err| I2CError { err })
-        }
-
-        fn transaction_iter<'a, O>(&mut self, address: u8, operations: O) -> Result<(), Self::Error>
-        where
-            O: IntoIterator<Item = I2cOperation<'a>>,
-        {
-            let mut ops: Vec<_> = operations.into_iter().collect();
-            self.transaction(address, &mut ops)
         }
     }
 }
