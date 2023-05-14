@@ -41,7 +41,7 @@ impl ops::DerefMut for Spidev {
 mod embedded_hal_impl {
     use super::*;
     use embedded_hal::spi::ErrorType;
-    use embedded_hal::spi::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice};
+    use embedded_hal::spi::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite};
     use spidev::SpidevTransfer;
     use std::io::{Read, Write};
 
@@ -79,19 +79,6 @@ mod embedded_hal_impl {
             self.0
                 .transfer(&mut SpidevTransfer::read_write(&tx, words))
                 .map_err(|err| SPIError { err })
-        }
-    }
-
-    impl SpiDevice for Spidev {
-        type Bus = Spidev;
-
-        fn transaction<R>(
-            &mut self,
-            f: impl FnOnce(&mut Self::Bus) -> Result<R, <Self::Bus as ErrorType>::Error>,
-        ) -> Result<R, Self::Error> {
-            let result = f(self)?;
-            self.flush()?;
-            Ok(result)
         }
     }
 }
