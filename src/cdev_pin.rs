@@ -33,7 +33,7 @@ impl CdevPin {
         } else if self.1.is_open_source() {
             flags.insert(gpio_cdev::LineRequestFlags::OPEN_SOURCE);
         }
-        return flags;
+        flags
     }
 
     /// Set this pin to input mode
@@ -95,7 +95,7 @@ fn state_to_value(state: embedded_hal::digital::PinState, is_active_low: bool) -
 }
 
 impl embedded_hal::digital::ErrorType for CdevPin {
-    type Error = gpio_cdev::errors::Error;
+    type Error = PinError;
 }
 
 impl embedded_hal::digital::OutputPin for CdevPin {
@@ -103,25 +103,27 @@ impl embedded_hal::digital::OutputPin for CdevPin {
         self.0.set_value(state_to_value(
             embedded_hal::digital::PinState::Low,
             self.1.is_active_low(),
-        ))
+        ))?;
+        Ok(())
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
         self.0.set_value(state_to_value(
             embedded_hal::digital::PinState::High,
             self.1.is_active_low(),
-        ))
+        ))?;
+        Ok(())
     }
 }
 
 impl embedded_hal::digital::InputPin for CdevPin {
     fn is_high(&self) -> Result<bool, Self::Error> {
-        self.0.get_value().map(|val| {
+        Ok(self.0.get_value().map(|val| {
             val == state_to_value(
                 embedded_hal::digital::PinState::High,
                 self.1.is_active_low(),
             )
-        })
+        })?)
     }
 
     fn is_low(&self) -> Result<bool, Self::Error> {
@@ -140,5 +142,31 @@ impl core::ops::Deref for CdevPin {
 impl core::ops::DerefMut for CdevPin {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+/// Error type wrapping [gpio_cdev::errors::Error](gpio_cdev::errors::Error) to implement [embedded_hal::digital::ErrorKind]
+#[derive(Debug)]
+pub struct PinError {
+    err: gpio_cdev::errors::Error,
+}
+
+impl PinError {
+    /// Fetch inner (concrete) [`gpio_cdev::errors::Error`]
+    pub fn inner(&self) -> &gpio_cdev::errors::Error {
+        &self.err
+    }
+}
+
+impl From<gpio_cdev::errors::Error> for PinError {
+    fn from(err: gpio_cdev::errors::Error) -> Self {
+        Self { err }
+    }
+}
+
+impl embedded_hal::digital::Error for PinError {
+    fn kind(&self) -> embedded_hal::digital::ErrorKind {
+        use embedded_hal::digital::ErrorKind;
+        ErrorKind::Other
     }
 }
