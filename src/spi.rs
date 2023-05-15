@@ -88,9 +88,13 @@ mod embedded_hal_impl {
 
     impl SpiDeviceRead for Spidev {
         fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
-            for buf in operations {
-                SpiBusRead::read(self, buf)?;
-            }
+            let mut transfers: Vec<_> = operations
+                .iter_mut()
+                .map(|op| SpidevTransfer::read(op))
+                .collect();
+            self.0
+                .transfer_multiple(&mut transfers)
+                .map_err(|err| SPIError { err })?;
             self.flush()?;
             Ok(())
         }
@@ -98,9 +102,13 @@ mod embedded_hal_impl {
 
     impl SpiDeviceWrite for Spidev {
         fn write_transaction(&mut self, operations: &[&[u8]]) -> Result<(), Self::Error> {
-            for buf in operations {
-                SpiBusWrite::write(self, buf)?;
-            }
+            let mut transfers: Vec<_> = operations
+                .iter()
+                .map(|op| SpidevTransfer::write(op))
+                .collect();
+            self.0
+                .transfer_multiple(&mut transfers)
+                .map_err(|err| SPIError { err })?;
             self.flush()?;
             Ok(())
         }
@@ -111,12 +119,24 @@ mod embedded_hal_impl {
             &mut self,
             operations: &mut [SpiOperation<'_, u8>],
         ) -> Result<(), Self::Error> {
-            operations.iter_mut().try_for_each(|op| match op {
-                SpiOperation::Read(buf) => SpiBusRead::read(self, buf),
-                SpiOperation::Write(buf) => SpiBusWrite::write(self, buf),
-                SpiOperation::Transfer(read, write) => SpiBus::transfer(self, read, write),
-                SpiOperation::TransferInPlace(buf) => SpiBus::transfer_in_place(self, buf),
-            })?;
+            let mut transfers: Vec<_> = operations
+                .iter_mut()
+                .map(|op| match op {
+                    SpiOperation::Read(buf) => SpidevTransfer::read(buf),
+                    SpiOperation::Write(buf) => SpidevTransfer::write(buf),
+                    SpiOperation::Transfer(read, write) => SpidevTransfer::read_write(write, read),
+                    SpiOperation::TransferInPlace(buf) => {
+                        let tx = unsafe {
+                            let p = buf.as_ptr();
+                            std::slice::from_raw_parts(p, buf.len())
+                        };
+                        SpidevTransfer::read_write(tx, buf)
+                    }
+                })
+                .collect();
+            self.0
+                .transfer_multiple(&mut transfers)
+                .map_err(|err| SPIError { err })?;
             self.flush()?;
             Ok(())
         }
