@@ -46,39 +46,71 @@ impl SysfsPin {
     }
 }
 
+/// Error type wrapping [sysfs_gpio::Error](sysfs_gpio::Error) to implement [embedded_hal::digital::Error]
+#[derive(Debug)]
+pub struct SysfsPinError {
+    err: sysfs_gpio::Error,
+}
+
+impl SysfsPinError {
+    /// Fetch inner (concrete) [`sysfs_gpio::Error`]
+    pub fn inner(&self) -> &sysfs_gpio::Error {
+        &self.err
+    }
+}
+
+impl From<sysfs_gpio::Error> for SysfsPinError {
+    fn from(err: sysfs_gpio::Error) -> Self {
+        Self { err }
+    }
+}
+
+impl embedded_hal::digital::Error for SysfsPinError {
+    fn kind(&self) -> embedded_hal::digital::ErrorKind {
+        use embedded_hal::digital::ErrorKind;
+        ErrorKind::Other
+    }
+}
+
 impl embedded_hal::digital::ErrorType for SysfsPin {
-    type Error = sysfs_gpio::Error;
+    type Error = SysfsPinError;
 }
 
 impl embedded_hal::digital::OutputPin for SysfsPin {
-    fn set_low(&mut self) -> Result<(), Self::Error> {
-        if self.0.get_active_low()? {
-            self.0.set_value(1)
+    fn set_low(&mut self) -> Result<(), SysfsPinError> {
+        if self.0.get_active_low().map_err(SysfsPinError::from)? {
+            self.0.set_value(1).map_err(SysfsPinError::from)
         } else {
-            self.0.set_value(0)
+            self.0.set_value(0).map_err(SysfsPinError::from)
         }
     }
 
-    fn set_high(&mut self) -> Result<(), Self::Error> {
-        if self.0.get_active_low()? {
-            self.0.set_value(0)
+    fn set_high(&mut self) -> Result<(), SysfsPinError> {
+        if self.0.get_active_low().map_err(SysfsPinError::from)? {
+            self.0.set_value(0).map_err(SysfsPinError::from)
         } else {
-            self.0.set_value(1)
+            self.0.set_value(1).map_err(SysfsPinError::from)
         }
     }
 }
 
 impl embedded_hal::digital::InputPin for SysfsPin {
-    fn is_high(&self) -> Result<bool, Self::Error> {
-        if !self.0.get_active_low()? {
-            self.0.get_value().map(|val| val != 0)
+    fn is_high(&self) -> Result<bool, SysfsPinError> {
+        if !self.0.get_active_low().map_err(SysfsPinError::from)? {
+            self.0
+                .get_value()
+                .map(|val| val != 0)
+                .map_err(SysfsPinError::from)
         } else {
-            self.0.get_value().map(|val| val == 0)
+            self.0
+                .get_value()
+                .map(|val| val == 0)
+                .map_err(SysfsPinError::from)
         }
     }
 
-    fn is_low(&self) -> Result<bool, Self::Error> {
-        self.is_high().map(|val| !val)
+    fn is_low(&self) -> Result<bool, SysfsPinError> {
+        self.is_high().map(|val| !val).map_err(SysfsPinError::from)
     }
 }
 

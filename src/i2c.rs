@@ -13,7 +13,7 @@ use embedded_hal::i2c::NoAcknowledgeSource;
 pub struct I2cdev {
     inner: i2cdev::linux::LinuxI2CDevice,
     path: PathBuf,
-    address: Option<u8>,
+    address: Option<u16>,
 }
 
 impl I2cdev {
@@ -32,9 +32,9 @@ impl I2cdev {
         Ok(dev)
     }
 
-    fn set_address(&mut self, address: u8) -> Result<(), i2cdev::linux::LinuxI2CError> {
+    fn set_address(&mut self, address: u16) -> Result<(), i2cdev::linux::LinuxI2CError> {
         if self.address != Some(address) {
-            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, u16::from(address))?;
+            self.inner = i2cdev::linux::LinuxI2CDevice::new(&self.path, address)?;
             self.address = Some(address);
         }
         Ok(())
@@ -58,65 +58,17 @@ impl ops::DerefMut for I2cdev {
 mod embedded_hal_impl {
     use super::*;
     use embedded_hal::i2c::ErrorType;
-    use embedded_hal::i2c::{I2c, Operation as I2cOperation};
-    use i2cdev::core::{I2CDevice, I2CMessage, I2CTransfer};
+    use embedded_hal::i2c::{I2c, Operation as I2cOperation, SevenBitAddress, TenBitAddress};
+    use i2cdev::core::{I2CMessage, I2CTransfer};
     use i2cdev::linux::LinuxI2CMessage;
     impl ErrorType for I2cdev {
         type Error = I2CError;
     }
 
-    impl I2c for I2cdev {
-        fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
-            self.set_address(address)?;
-            self.inner.read(buffer).map_err(|err| I2CError { err })
-        }
-
-        fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-            self.set_address(address)?;
-            self.inner.write(bytes).map_err(|err| I2CError { err })
-        }
-
-        fn write_iter<B>(&mut self, address: u8, bytes: B) -> Result<(), Self::Error>
-        where
-            B: IntoIterator<Item = u8>,
-        {
-            let bytes: Vec<_> = bytes.into_iter().collect();
-            self.write(address, &bytes)
-        }
-
-        fn write_read(
-            &mut self,
-            address: u8,
-            bytes: &[u8],
-            buffer: &mut [u8],
-        ) -> Result<(), Self::Error> {
-            self.set_address(address)?;
-            let mut messages = [LinuxI2CMessage::write(bytes), LinuxI2CMessage::read(buffer)];
-            self.inner
-                .transfer(&mut messages)
-                .map(drop)
-                .map_err(|err| I2CError { err })
-        }
-
-        fn write_iter_read<B>(
-            &mut self,
-            address: u8,
-            bytes: B,
-            buffer: &mut [u8],
-        ) -> Result<(), Self::Error>
-        where
-            B: IntoIterator<Item = u8>,
-        {
-            let bytes: Vec<_> = bytes.into_iter().collect();
-            self.transaction(
-                address,
-                &mut [I2cOperation::Write(&bytes), I2cOperation::Read(buffer)],
-            )
-        }
-
+    impl I2c<TenBitAddress> for I2cdev {
         fn transaction(
             &mut self,
-            address: u8,
+            address: u16,
             operations: &mut [I2cOperation],
         ) -> Result<(), Self::Error> {
             // Map operations from generic to linux objects
@@ -135,13 +87,15 @@ mod embedded_hal_impl {
                 .map(drop)
                 .map_err(|err| I2CError { err })
         }
+    }
 
-        fn transaction_iter<'a, O>(&mut self, address: u8, operations: O) -> Result<(), Self::Error>
-        where
-            O: IntoIterator<Item = I2cOperation<'a>>,
-        {
-            let mut ops: Vec<_> = operations.into_iter().collect();
-            self.transaction(address, &mut ops)
+    impl I2c<SevenBitAddress> for I2cdev {
+        fn transaction(
+            &mut self,
+            address: u8,
+            operations: &mut [I2cOperation],
+        ) -> Result<(), Self::Error> {
+            I2c::<TenBitAddress>::transaction(self, u16::from(address), operations)
         }
     }
 }

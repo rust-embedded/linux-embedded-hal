@@ -94,37 +94,70 @@ fn state_to_value(state: embedded_hal::digital::PinState, is_active_low: bool) -
     }
 }
 
+/// Error type wrapping [gpio_cdev::errors::Error](gpio_cdev::errors::Error) to implement [embedded_hal::digital::Error]
+#[derive(Debug)]
+pub struct CdevPinError {
+    err: gpio_cdev::errors::Error,
+}
+
+impl CdevPinError {
+    /// Fetch inner (concrete) [`gpio_cdev::errors::Error`]
+    pub fn inner(&self) -> &gpio_cdev::errors::Error {
+        &self.err
+    }
+}
+
+impl From<gpio_cdev::errors::Error> for CdevPinError {
+    fn from(err: gpio_cdev::errors::Error) -> Self {
+        Self { err }
+    }
+}
+
+impl embedded_hal::digital::Error for CdevPinError {
+    fn kind(&self) -> embedded_hal::digital::ErrorKind {
+        use embedded_hal::digital::ErrorKind;
+        ErrorKind::Other
+    }
+}
+
 impl embedded_hal::digital::ErrorType for CdevPin {
-    type Error = gpio_cdev::errors::Error;
+    type Error = CdevPinError;
 }
 
 impl embedded_hal::digital::OutputPin for CdevPin {
-    fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(state_to_value(
-            embedded_hal::digital::PinState::Low,
-            self.1.is_active_low(),
-        ))
+    fn set_low(&mut self) -> Result<(), CdevPinError> {
+        self.0
+            .set_value(state_to_value(
+                embedded_hal::digital::PinState::Low,
+                self.1.is_active_low(),
+            ))
+            .map_err(CdevPinError::from)
     }
 
-    fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.0.set_value(state_to_value(
-            embedded_hal::digital::PinState::High,
-            self.1.is_active_low(),
-        ))
+    fn set_high(&mut self) -> Result<(), CdevPinError> {
+        self.0
+            .set_value(state_to_value(
+                embedded_hal::digital::PinState::High,
+                self.1.is_active_low(),
+            ))
+            .map_err(CdevPinError::from)
     }
 }
 
 impl embedded_hal::digital::InputPin for CdevPin {
-    fn is_high(&self) -> Result<bool, Self::Error> {
-        self.0.get_value().map(|val| {
-            val == state_to_value(
-                embedded_hal::digital::PinState::High,
-                self.1.is_active_low(),
-            )
-        })
+    fn is_high(&self) -> Result<bool, CdevPinError> {
+        self.0
+            .get_value()
+            .map(|val| {
+                val == state_to_value(
+                    embedded_hal::digital::PinState::High,
+                    self.1.is_active_low(),
+                )
+            })
+            .map_err(CdevPinError::from)
     }
 
-    fn is_low(&self) -> Result<bool, Self::Error> {
+    fn is_low(&self) -> Result<bool, CdevPinError> {
         self.is_high().map(|val| !val)
     }
 }

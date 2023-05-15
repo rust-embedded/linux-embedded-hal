@@ -41,7 +41,10 @@ impl ops::DerefMut for Spidev {
 mod embedded_hal_impl {
     use super::*;
     use embedded_hal::spi::ErrorType;
-    use embedded_hal::spi::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice};
+    use embedded_hal::spi::{
+        Operation as SpiOperation, SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice,
+        SpiDeviceRead, SpiDeviceWrite,
+    };
     use spidev::SpidevTransfer;
     use std::io::{Read, Write};
 
@@ -82,16 +85,39 @@ mod embedded_hal_impl {
         }
     }
 
-    impl SpiDevice for Spidev {
-        type Bus = Spidev;
-
-        fn transaction<R>(
-            &mut self,
-            f: impl FnOnce(&mut Self::Bus) -> Result<R, <Self::Bus as ErrorType>::Error>,
-        ) -> Result<R, Self::Error> {
-            let result = f(self)?;
+    impl SpiDeviceRead for Spidev {
+        fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
+            for mut buf in operations {
+                SpiBusRead::read(self, &mut buf)?;
+            }
             self.flush()?;
-            Ok(result)
+            Ok(())
+        }
+    }
+
+    impl SpiDeviceWrite for Spidev {
+        fn write_transaction(&mut self, operations: &[&[u8]]) -> Result<(), Self::Error> {
+            for buf in operations {
+                SpiBusWrite::write(self, buf)?;
+            }
+            self.flush()?;
+            Ok(())
+        }
+    }
+
+    impl SpiDevice for Spidev {
+        fn transaction(
+            &mut self,
+            operations: &mut [SpiOperation<'_, u8>],
+        ) -> Result<(), Self::Error> {
+            operations.iter_mut().try_for_each(|op| match op {
+                SpiOperation::Read(buf) => SpiBusRead::read(self, buf),
+                SpiOperation::Write(buf) => SpiBusWrite::write(self, buf),
+                SpiOperation::Transfer(read, write) => SpiBus::transfer(self, read, write),
+                SpiOperation::TransferInPlace(buf) => SpiBus::transfer_in_place(self, buf),
+            })?;
+            self.flush()?;
+            Ok(())
         }
     }
 }
