@@ -2,6 +2,8 @@
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
+use std::fmt;
+
 /// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
 ///
 /// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.LineHandle.html
@@ -33,7 +35,7 @@ impl CdevPin {
         } else if self.1.is_open_source() {
             flags.insert(gpio_cdev::LineRequestFlags::OPEN_SOURCE);
         }
-        return flags;
+        flags
     }
 
     /// Set this pin to input mode
@@ -113,6 +115,18 @@ impl From<gpio_cdev::errors::Error> for CdevPinError {
     }
 }
 
+impl fmt::Display for CdevPinError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.err)
+    }
+}
+
+impl std::error::Error for CdevPinError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.err)
+    }
+}
+
 impl embedded_hal::digital::Error for CdevPinError {
     fn kind(&self) -> embedded_hal::digital::ErrorKind {
         use embedded_hal::digital::ErrorKind;
@@ -125,7 +139,7 @@ impl embedded_hal::digital::ErrorType for CdevPin {
 }
 
 impl embedded_hal::digital::OutputPin for CdevPin {
-    fn set_low(&mut self) -> Result<(), CdevPinError> {
+    fn set_low(&mut self) -> Result<(), Self::Error> {
         self.0
             .set_value(state_to_value(
                 embedded_hal::digital::PinState::Low,
@@ -134,7 +148,7 @@ impl embedded_hal::digital::OutputPin for CdevPin {
             .map_err(CdevPinError::from)
     }
 
-    fn set_high(&mut self) -> Result<(), CdevPinError> {
+    fn set_high(&mut self) -> Result<(), Self::Error> {
         self.0
             .set_value(state_to_value(
                 embedded_hal::digital::PinState::High,
@@ -145,7 +159,7 @@ impl embedded_hal::digital::OutputPin for CdevPin {
 }
 
 impl embedded_hal::digital::InputPin for CdevPin {
-    fn is_high(&self) -> Result<bool, CdevPinError> {
+    fn is_high(&self) -> Result<bool, Self::Error> {
         self.0
             .get_value()
             .map(|val| {
@@ -157,7 +171,7 @@ impl embedded_hal::digital::InputPin for CdevPin {
             .map_err(CdevPinError::from)
     }
 
-    fn is_low(&self) -> Result<bool, CdevPinError> {
+    fn is_low(&self) -> Result<bool, Self::Error> {
         self.is_high().map(|val| !val)
     }
 }

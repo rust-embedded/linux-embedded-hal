@@ -3,6 +3,7 @@
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 //!
 
+use std::fmt;
 use std::io;
 use std::ops;
 use std::path::Path;
@@ -87,8 +88,8 @@ mod embedded_hal_impl {
 
     impl SpiDeviceRead for Spidev {
         fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
-            for mut buf in operations {
-                SpiBusRead::read(self, &mut buf)?;
+            for buf in operations {
+                SpiBusRead::read(self, buf)?;
             }
             self.flush()?;
             Ok(())
@@ -148,5 +149,17 @@ impl embedded_hal::spi::Error for SPIError {
             // TODO: match any errors here if we can find any that are relevant
             _ => ErrorKind::Other,
         }
+    }
+}
+
+impl fmt::Display for SPIError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.err)
+    }
+}
+
+impl std::error::Error for SPIError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.err)
     }
 }

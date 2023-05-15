@@ -2,8 +2,8 @@
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
-use nb;
 use serialport::{SerialPortBuilder, TTYPort};
+use std::fmt;
 use std::io::{ErrorKind as IoErrorKind, Read, Write};
 
 /// Newtype around [`serialport::TTYPort`] that implements
@@ -71,6 +71,14 @@ impl SerialError {
         &self.err
     }
 }
+
+impl fmt::Display for SerialError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.err)
+    }
+}
+
+impl std::error::Error for SerialError {}
 
 impl embedded_hal::serial::Error for SerialError {
     fn kind(&self) -> embedded_hal::serial::ErrorKind {

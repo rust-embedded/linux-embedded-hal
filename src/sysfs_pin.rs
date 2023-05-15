@@ -2,6 +2,7 @@
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
+use std::fmt;
 use std::path::Path;
 
 /// Newtype around [`sysfs_gpio::Pin`] that implements the `embedded-hal` traits
@@ -65,6 +66,18 @@ impl From<sysfs_gpio::Error> for SysfsPinError {
     }
 }
 
+impl fmt::Display for SysfsPinError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.err)
+    }
+}
+
+impl std::error::Error for SysfsPinError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.err)
+    }
+}
+
 impl embedded_hal::digital::Error for SysfsPinError {
     fn kind(&self) -> embedded_hal::digital::ErrorKind {
         use embedded_hal::digital::ErrorKind;
@@ -77,7 +90,7 @@ impl embedded_hal::digital::ErrorType for SysfsPin {
 }
 
 impl embedded_hal::digital::OutputPin for SysfsPin {
-    fn set_low(&mut self) -> Result<(), SysfsPinError> {
+    fn set_low(&mut self) -> Result<(), Self::Error> {
         if self.0.get_active_low().map_err(SysfsPinError::from)? {
             self.0.set_value(1).map_err(SysfsPinError::from)
         } else {
@@ -85,7 +98,7 @@ impl embedded_hal::digital::OutputPin for SysfsPin {
         }
     }
 
-    fn set_high(&mut self) -> Result<(), SysfsPinError> {
+    fn set_high(&mut self) -> Result<(), Self::Error> {
         if self.0.get_active_low().map_err(SysfsPinError::from)? {
             self.0.set_value(0).map_err(SysfsPinError::from)
         } else {
@@ -95,7 +108,7 @@ impl embedded_hal::digital::OutputPin for SysfsPin {
 }
 
 impl embedded_hal::digital::InputPin for SysfsPin {
-    fn is_high(&self) -> Result<bool, SysfsPinError> {
+    fn is_high(&self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low().map_err(SysfsPinError::from)? {
             self.0
                 .get_value()
@@ -109,7 +122,7 @@ impl embedded_hal::digital::InputPin for SysfsPin {
         }
     }
 
-    fn is_low(&self) -> Result<bool, SysfsPinError> {
+    fn is_low(&self) -> Result<bool, Self::Error> {
         self.is_high().map(|val| !val).map_err(SysfsPinError::from)
     }
 }

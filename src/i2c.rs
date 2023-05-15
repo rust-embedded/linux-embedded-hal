@@ -2,6 +2,7 @@
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
+use std::fmt;
 use std::ops;
 use std::path::{Path, PathBuf};
 
@@ -116,6 +117,18 @@ impl I2CError {
 impl From<i2cdev::linux::LinuxI2CError> for I2CError {
     fn from(err: i2cdev::linux::LinuxI2CError) -> Self {
         Self { err }
+    }
+}
+
+impl fmt::Display for I2CError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.err)
+    }
+}
+
+impl std::error::Error for I2CError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.err)
     }
 }
 
