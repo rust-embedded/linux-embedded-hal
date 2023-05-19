@@ -3,6 +3,7 @@
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 //!
 
+use std::fmt;
 use std::io;
 use std::ops;
 use std::path::Path;
@@ -41,7 +42,10 @@ impl ops::DerefMut for Spidev {
 mod embedded_hal_impl {
     use super::*;
     use embedded_hal::spi::ErrorType;
-    use embedded_hal::spi::{SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice};
+    use embedded_hal::spi::{
+        Operation as SpiOperation, SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice,
+        SpiDeviceRead, SpiDeviceWrite,
+    };
     use spidev::SpidevTransfer;
     use std::io::{Read, Write};
 
@@ -82,16 +86,59 @@ mod embedded_hal_impl {
         }
     }
 
-    impl SpiDevice for Spidev {
-        type Bus = Spidev;
-
-        fn transaction<R>(
-            &mut self,
-            f: impl FnOnce(&mut Self::Bus) -> Result<R, <Self::Bus as ErrorType>::Error>,
-        ) -> Result<R, Self::Error> {
-            let result = f(self)?;
+    impl SpiDeviceRead for Spidev {
+        fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
+            let mut transfers: Vec<_> = operations
+                .iter_mut()
+                .map(|op| SpidevTransfer::read(op))
+                .collect();
+            self.0
+                .transfer_multiple(&mut transfers)
+                .map_err(|err| SPIError { err })?;
             self.flush()?;
-            Ok(result)
+            Ok(())
+        }
+    }
+
+    impl SpiDeviceWrite for Spidev {
+        fn write_transaction(&mut self, operations: &[&[u8]]) -> Result<(), Self::Error> {
+            let mut transfers: Vec<_> = operations
+                .iter()
+                .map(|op| SpidevTransfer::write(op))
+                .collect();
+            self.0
+                .transfer_multiple(&mut transfers)
+                .map_err(|err| SPIError { err })?;
+            self.flush()?;
+            Ok(())
+        }
+    }
+
+    impl SpiDevice for Spidev {
+        fn transaction(
+            &mut self,
+            operations: &mut [SpiOperation<'_, u8>],
+        ) -> Result<(), Self::Error> {
+            let mut transfers: Vec<_> = operations
+                .iter_mut()
+                .map(|op| match op {
+                    SpiOperation::Read(buf) => SpidevTransfer::read(buf),
+                    SpiOperation::Write(buf) => SpidevTransfer::write(buf),
+                    SpiOperation::Transfer(read, write) => SpidevTransfer::read_write(write, read),
+                    SpiOperation::TransferInPlace(buf) => {
+                        let tx = unsafe {
+                            let p = buf.as_ptr();
+                            std::slice::from_raw_parts(p, buf.len())
+                        };
+                        SpidevTransfer::read_write(tx, buf)
+                    }
+                })
+                .collect();
+            self.0
+                .transfer_multiple(&mut transfers)
+                .map_err(|err| SPIError { err })?;
+            self.flush()?;
+            Ok(())
         }
     }
 }
@@ -122,5 +169,17 @@ impl embedded_hal::spi::Error for SPIError {
             // TODO: match any errors here if we can find any that are relevant
             _ => ErrorKind::Other,
         }
+    }
+}
+
+impl fmt::Display for SPIError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.err)
+    }
+}
+
+impl std::error::Error for SPIError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.err)
     }
 }

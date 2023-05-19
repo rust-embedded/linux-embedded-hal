@@ -34,11 +34,11 @@ mod cdev_pin;
 
 #[cfg(feature = "gpio_cdev")]
 /// Cdev pin re-export
-pub use cdev_pin::CdevPin;
+pub use cdev_pin::{CdevPin, CdevPinError};
 
 #[cfg(feature = "gpio_sysfs")]
 /// Sysfs pin re-export
-pub use sysfs_pin::SysfsPin;
+pub use sysfs_pin::{SysfsPin, SysfsPinError};
 
 mod delay;
 #[cfg(feature = "i2c")]
