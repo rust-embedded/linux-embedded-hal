@@ -81,6 +81,7 @@ impl fmt::Display for SerialError {
 impl std::error::Error for SerialError {}
 
 impl embedded_hal::serial::Error for SerialError {
+    #[allow(clippy::match_single_binding)]
     fn kind(&self) -> embedded_hal::serial::ErrorKind {
         use embedded_hal::serial::ErrorKind::*;
         // TODO: match any errors here if we can find any that are relevant
