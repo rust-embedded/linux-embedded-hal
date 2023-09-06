@@ -138,7 +138,7 @@ impl embedded_hal::i2c::Error for I2CError {
         use nix::errno::Errno::*;
 
         let errno = match &self.err {
-            i2cdev::linux::LinuxI2CError::Nix(e) => *e,
+            i2cdev::linux::LinuxI2CError::Errno(e) => nix::Error::from_i32(*e),
             i2cdev::linux::LinuxI2CError::Io(e) => match e.raw_os_error() {
                 Some(r) => nix::Error::from_i32(r),
                 None => return ErrorKind::Other,
