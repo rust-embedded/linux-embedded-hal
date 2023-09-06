@@ -10,7 +10,10 @@ use std::path::Path;
 
 /// Newtype around [`spidev::Spidev`] that implements the `embedded-hal` traits
 ///
+/// [Delay operations][delay] are capped to 65535 microseconds.
+///
 /// [`spidev::Spidev`]: https://docs.rs/spidev/0.5.2/spidev/struct.Spidev.html
+/// [delay]: embedded_hal::spi::Operation::DelayUs
 pub struct Spidev(pub spidev::Spidev);
 
 impl Spidev {
@@ -79,6 +82,12 @@ mod embedded_hal_impl {
     }
 
     impl SpiDevice for Spidev {
+        ///Perform a transaction against the device. [Read more][transaction]
+        ///
+        /// [Delay operations][delay] are capped to 65535 microseconds.
+        ///
+        /// [transaction]: SpiDevice::transaction
+        /// [delay]: SpiOperation::DelayUs
         fn transaction(
             &mut self,
             operations: &mut [SpiOperation<'_, u8>],
