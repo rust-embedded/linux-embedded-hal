@@ -1,23 +1,19 @@
 on:
-  push:
-    branches: [ staging, trying, master ]
-  pull_request:
+  push: # Run CI for all branches except GitHub merge queue tmp branches
+    branches-ignore:
+    - "gh-readonly-queue/**"
+  pull_request: # Run CI for PRs on any branch
+  merge_group: # Run CI for the GitHub merge queue
 
 name: Code formatting check
 
 jobs:
   fmt:
-    name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
+          toolchain: nightly
           components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --check
