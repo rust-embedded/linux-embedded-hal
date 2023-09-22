@@ -10,13 +10,16 @@ use std::path::Path;
 
 /// Newtype around [`spidev::Spidev`] that implements the `embedded-hal` traits
 ///
-/// [`spidev::Spidev`]: https://docs.rs/spidev/0.5.0/spidev/struct.Spidev.html
+/// [Delay operations][delay] are capped to 65535 microseconds.
+///
+/// [`spidev::Spidev`]: https://docs.rs/spidev/0.5.2/spidev/struct.Spidev.html
+/// [delay]: embedded_hal::spi::Operation::DelayUs
 pub struct Spidev(pub spidev::Spidev);
 
 impl Spidev {
     /// See [`spidev::Spidev::open`][0] for details.
     ///
-    /// [0]: https://docs.rs/spidev/0.5.0/spidev/struct.Spidev.html#method.open
+    /// [0]: https://docs.rs/spidev/0.5.2/spidev/struct.Spidev.html#method.open
     pub fn open<P>(path: P) -> Result<Self, SPIError>
     where
         P: AsRef<Path>,
@@ -42,36 +45,24 @@ impl ops::DerefMut for Spidev {
 mod embedded_hal_impl {
     use super::*;
     use embedded_hal::spi::ErrorType;
-    use embedded_hal::spi::{
-        Operation as SpiOperation, SpiBus, SpiBusFlush, SpiBusRead, SpiBusWrite, SpiDevice,
-        SpiDeviceRead, SpiDeviceWrite,
-    };
+    use embedded_hal::spi::{Operation as SpiOperation, SpiBus, SpiDevice};
     use spidev::SpidevTransfer;
+    use std::convert::TryInto;
     use std::io::{Read, Write};
 
     impl ErrorType for Spidev {
         type Error = SPIError;
     }
 
-    impl SpiBusFlush for Spidev {
-        fn flush(&mut self) -> Result<(), Self::Error> {
-            self.0.flush().map_err(|err| SPIError { err })
-        }
-    }
-
-    impl SpiBusRead<u8> for Spidev {
+    impl SpiBus<u8> for Spidev {
         fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
             self.0.read_exact(words).map_err(|err| SPIError { err })
         }
-    }
 
-    impl SpiBusWrite<u8> for Spidev {
         fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
             self.0.write_all(words).map_err(|err| SPIError { err })
         }
-    }
 
-    impl SpiBus<u8> for Spidev {
         fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
             self.0
                 .transfer(&mut SpidevTransfer::read_write(write, read))
@@ -84,37 +75,19 @@ mod embedded_hal_impl {
                 .transfer(&mut SpidevTransfer::read_write(&tx, words))
                 .map_err(|err| SPIError { err })
         }
-    }
 
-    impl SpiDeviceRead for Spidev {
-        fn read_transaction(&mut self, operations: &mut [&mut [u8]]) -> Result<(), Self::Error> {
-            let mut transfers: Vec<_> = operations
-                .iter_mut()
-                .map(|op| SpidevTransfer::read(op))
-                .collect();
-            self.0
-                .transfer_multiple(&mut transfers)
-                .map_err(|err| SPIError { err })?;
-            self.flush()?;
-            Ok(())
-        }
-    }
-
-    impl SpiDeviceWrite for Spidev {
-        fn write_transaction(&mut self, operations: &[&[u8]]) -> Result<(), Self::Error> {
-            let mut transfers: Vec<_> = operations
-                .iter()
-                .map(|op| SpidevTransfer::write(op))
-                .collect();
-            self.0
-                .transfer_multiple(&mut transfers)
-                .map_err(|err| SPIError { err })?;
-            self.flush()?;
-            Ok(())
+        fn flush(&mut self) -> Result<(), Self::Error> {
+            self.0.flush().map_err(|err| SPIError { err })
         }
     }
 
     impl SpiDevice for Spidev {
+        ///Perform a transaction against the device. [Read more][transaction]
+        ///
+        /// [Delay operations][delay] are capped to 65535 microseconds.
+        ///
+        /// [transaction]: SpiDevice::transaction
+        /// [delay]: SpiOperation::DelayUs
         fn transaction(
             &mut self,
             operations: &mut [SpiOperation<'_, u8>],
@@ -131,6 +104,9 @@ mod embedded_hal_impl {
                             std::slice::from_raw_parts(p, buf.len())
                         };
                         SpidevTransfer::read_write(tx, buf)
+                    }
+                    SpiOperation::DelayUs(us) => {
+                        SpidevTransfer::delay((*us).try_into().unwrap_or(u16::MAX))
                     }
                 })
                 .collect();
@@ -163,6 +139,7 @@ impl From<io::Error> for SPIError {
 }
 
 impl embedded_hal::spi::Error for SPIError {
+    #[allow(clippy::match_single_binding)]
     fn kind(&self) -> embedded_hal::spi::ErrorKind {
         use embedded_hal::spi::ErrorKind;
         // TODO: match any errors here if we can find any that are relevant
