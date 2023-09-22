@@ -1,7 +1,9 @@
 on:
-  push:
-    branches: [ staging, trying, master ]
-  pull_request:
+  push: # Run CI for all branches except GitHub merge queue tmp branches
+    branches-ignore:
+    - "gh-readonly-queue/**"
+  pull_request: # Run CI for PRs on any branch
+  merge_group: # Run CI for the GitHub merge queue
 
 name: Continuous integration
 
@@ -13,37 +15,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # All generated code should be running on stable now
         rust: [stable]
-
-        # The default target we're compiling on and for
-        TARGET: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf]
+        target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf]
+        features:
+          - ''
+          - 'async-tokio,gpio_cdev,gpio_sysfs,i2c,spi'
 
         include:
-          # Test MSRV
-          - rust: 1.60.0
-            TARGET: x86_64-unknown-linux-gnu
+          - rust: 1.60.0 # MSRV
+            target: x86_64-unknown-linux-gnu
 
           # Test nightly but don't fail
           - rust: nightly
             experimental: true
-            TARGET: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          target: ${{ matrix.TARGET }}
-          override: true
+          target: ${{ matrix.target }}
 
       - name: Install armv7 libraries
-        if: ${{ matrix.TARGET == 'armv7-unknown-linux-gnueabihf' }}
+        if: ${{ matrix.target == 'armv7-unknown-linux-gnueabihf' }}
         run: sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --target=${{ matrix.TARGET }}
+      - run: cargo check --target=${{ matrix.target }} --features=${{ matrix.features }}

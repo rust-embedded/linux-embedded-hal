@@ -165,10 +165,8 @@ impl From<io::Error> for SPIError {
 impl embedded_hal::spi::Error for SPIError {
     fn kind(&self) -> embedded_hal::spi::ErrorKind {
         use embedded_hal::spi::ErrorKind;
-        match self.err.kind() {
-            // TODO: match any errors here if we can find any that are relevant
-            _ => ErrorKind::Other,
-        }
+        // TODO: match any errors here if we can find any that are relevant
+        ErrorKind::Other
     }
 }
 

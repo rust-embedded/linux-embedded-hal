@@ -83,10 +83,8 @@ impl std::error::Error for SerialError {}
 impl embedded_hal::serial::Error for SerialError {
     fn kind(&self) -> embedded_hal::serial::ErrorKind {
         use embedded_hal::serial::ErrorKind::*;
-        match &self.err {
-            // TODO: match any errors here if we can find any that are relevant
-            _ => Other,
-        }
+        // TODO: match any errors here if we can find any that are relevant
+        Other
     }
 }
 
