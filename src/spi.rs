@@ -3,6 +3,7 @@
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 //!
 
+use std::cmp::Ordering;
 use std::fmt;
 use std::io;
 use std::ops;
@@ -64,9 +65,24 @@ mod embedded_hal_impl {
         }
 
         fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
-            self.0
-                .transfer(&mut SpidevTransfer::read_write(write, read))
-                .map_err(|err| SPIError { err })
+            let read_len = read.len();
+            match read_len.cmp(&write.len()) {
+                Ordering::Less => self.0.transfer_multiple(&mut [
+                    SpidevTransfer::read_write(&write[..read_len], read),
+                    SpidevTransfer::write(&write[read_len..]),
+                ]),
+                Ordering::Equal => self
+                    .0
+                    .transfer(&mut SpidevTransfer::read_write(write, read)),
+                Ordering::Greater => {
+                    let (read1, read2) = read.split_at_mut(write.len());
+                    self.0.transfer_multiple(&mut [
+                        SpidevTransfer::read_write(write, read1),
+                        SpidevTransfer::read(read2),
+                    ])
+                }
+            }
+            .map_err(|err| SPIError { err })
         }
 
         fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
@@ -82,7 +98,7 @@ mod embedded_hal_impl {
     }
 
     impl SpiDevice for Spidev {
-        ///Perform a transaction against the device. [Read more][transaction]
+        /// Perform a transaction against the device. [Read more][transaction]
         ///
         /// [Delay operations][delay] are capped to 65535 microseconds.
         ///
@@ -92,24 +108,37 @@ mod embedded_hal_impl {
             &mut self,
             operations: &mut [SpiOperation<'_, u8>],
         ) -> Result<(), Self::Error> {
-            let mut transfers: Vec<_> = operations
-                .iter_mut()
-                .map(|op| match op {
-                    SpiOperation::Read(buf) => SpidevTransfer::read(buf),
-                    SpiOperation::Write(buf) => SpidevTransfer::write(buf),
-                    SpiOperation::Transfer(read, write) => SpidevTransfer::read_write(write, read),
+            let mut transfers = Vec::with_capacity(operations.len());
+            for op in operations {
+                match op {
+                    SpiOperation::Read(buf) => transfers.push(SpidevTransfer::read(buf)),
+                    SpiOperation::Write(buf) => transfers.push(SpidevTransfer::write(buf)),
+                    SpiOperation::Transfer(read, write) => match read.len().cmp(&write.len()) {
+                        Ordering::Less => {
+                            let n = read.len();
+                            transfers.push(SpidevTransfer::read_write(&write[..n], read));
+                            transfers.push(SpidevTransfer::write(&write[n..]));
+                        }
+                        Ordering::Equal => transfers.push(SpidevTransfer::read_write(write, read)),
+                        Ordering::Greater => {
+                            let (read1, read2) = read.split_at_mut(write.len());
+                            transfers.push(SpidevTransfer::read_write(write, read1));
+                            transfers.push(SpidevTransfer::read(read2));
+                        }
+                    },
                     SpiOperation::TransferInPlace(buf) => {
                         let tx = unsafe {
                             let p = buf.as_ptr();
                             std::slice::from_raw_parts(p, buf.len())
                         };
-                        SpidevTransfer::read_write(tx, buf)
+                        transfers.push(SpidevTransfer::read_write(tx, buf));
                     }
                     SpiOperation::DelayUs(us) => {
-                        SpidevTransfer::delay((*us).try_into().unwrap_or(u16::MAX))
+                        let us = (*us).try_into().unwrap_or(u16::MAX);
+                        transfers.push(SpidevTransfer::delay(us));
                     }
-                })
-                .collect();
+                }
+            }
             self.0
                 .transfer_multiple(&mut transfers)
                 .map_err(|err| SPIError { err })?;
