@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated to `embedded-hal` `1.0.0-alpha.11` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-alpha11---2023-07-04))
 - Updated to `spidev` `0.5.2` release([API changes](https://github.com/rust-embedded/rust-spidev/blob/master/CHANGELOG.md#052--2023-08-02))
 
+### Fixed
+- Fix using SPI transfer with unequal buffer sizes (#97, #98).
+
 ## [v0.4.0-alpha.3] - 2022-08-04
 
 ### Added
