@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v1.0.0-rc.1] - 2023-09-06
-
 ### Changed
 - [breaking-change] Replace serial-rs with the serialport-rs crate. `Serial::open` now needs a baud-rate argument as well.
 - Updated to `embedded-hal` `1.0.0-rc.1` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-rc1---2023-08-15))
@@ -143,8 +141,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v1.0.0-rc.1...HEAD
-[v1.0.0-rc.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...v1.0.0-rc.1
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...HEAD
 [v0.4.0-alpha.3]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
 [v0.4.0-alpha.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.1...v0.4.0-alpha.2
 [v0.4.0-alpha.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.4.0-alpha.1
