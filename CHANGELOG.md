@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - [breaking-change] Replace serial-rs with the serialport-rs crate. `Serial::open` now needs a baud-rate argument as well.
-- Updated to `embedded-hal` `1.0.0-alpha.11` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-alpha11---2023-07-04))
-- Updated to `spidev` `0.5.2` release([API changes](https://github.com/rust-embedded/rust-spidev/blob/master/CHANGELOG.md#052--2023-08-02))
+- Updated to `embedded-hal` `1.0.0-rc.1` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-rc1---2023-08-15))
+- Updated to `embedded-hal-nb` `1.0.0-rc.1` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal-nb/CHANGELOG.md#v100-rc1---2023-08-15))
+- Updated to `spidev` `0.6.0` release([API changes](https://github.com/rust-embedded/rust-spidev/blob/master/CHANGELOG.md#060--2023-08-03))
+- Updated to `i2cdev` `0.6.0` release([API changes](https://github.com/rust-embedded/rust-i2cdev/blob/master/CHANGELOG.md#v060---2023-08-03))
+- Updated to `nix` `0.26` to match `i2cdev`
 
 ### Fixed
 - Fix using SPI transfer with unequal buffer sizes (#97, #98).

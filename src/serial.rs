@@ -32,7 +32,7 @@ fn translate_io_errors(err: std::io::Error) -> nb::Error<SerialError> {
     }
 }
 
-impl embedded_hal::serial::ErrorType for Serial {
+impl embedded_hal_nb::serial::ErrorType for Serial {
     type Error = SerialError;
 }
 
@@ -80,10 +80,10 @@ impl fmt::Display for SerialError {
 
 impl std::error::Error for SerialError {}
 
-impl embedded_hal::serial::Error for SerialError {
+impl embedded_hal_nb::serial::Error for SerialError {
     #[allow(clippy::match_single_binding)]
-    fn kind(&self) -> embedded_hal::serial::ErrorKind {
-        use embedded_hal::serial::ErrorKind::*;
+    fn kind(&self) -> embedded_hal_nb::serial::ErrorKind {
+        use embedded_hal_nb::serial::ErrorKind::*;
         // TODO: match any errors here if we can find any that are relevant
         Other
     }
@@ -120,7 +120,7 @@ mod test {
     #[test]
     fn test_read() {
         let (mut master, mut serial) = create_pty_and_serial();
-        master.write(&[1]).expect("Write failed");
+        master.write_all(&[1]).expect("Write failed");
         assert_eq!(Ok(1), serial.read());
     }
 
