@@ -11,8 +11,8 @@ use std::path::Path;
 
 /// Spidev wrapper providing the embedded-hal [`SpiDevice`] trait.
 ///
-/// Use this struct when you want a single spidev device, using a Linux-managed CS pin,
-/// which is already defined in your devicetree. Linux will handle sharing the bus
+/// Use this struct when you want a single spidev device, using a Linux-managed CS (chip-select) pin,
+/// which is already defined in your device tree. Linux will handle sharing the bus
 /// between different SPI devices, even between different processes.
 ///
 /// You get an object that implements [`SpiDevice`], which is what most drivers require,
@@ -34,23 +34,23 @@ pub struct SpidevDevice(pub spidev::Spidev);
 /// Spidev wrapper providing the embedded-hal [`SpiBus`] trait.
 ///
 /// Use this struct when you require direct access to the underlying SPI bus, for
-/// example when you want to use GPIOs as software-controlled CS pins to share the
+/// example when you want to use GPIOs as software-controlled CS (chip-select) pins to share the
 /// bus with multiple devices, or because a driver requires the entire bus (for
 /// example to drive smart LEDs).
 ///
 /// Do not use this struct if you're accessing SPI devices that already appear in your
-/// device tree; you will not be able to drive CS pins that are already used by spidev
+/// device tree; you will not be able to drive CS pins that are already used by `spidev`
 /// as GPIOs. Instead use [`SpidevDevice`].
 ///
 /// This struct must still be created from a [`spidev::Spidev`] device, but there are two
 /// important notes:
 ///
-/// 1. The CS pin associated with this spidev device will be driven whenever any device accesses
+/// 1. The CS pin associated with this `spidev` device will be driven whenever any device accesses
 ///    this bus, so it should be an unconnected or unused pin.
-/// 2. No other spidev device on the same bus may be used as long as this `SpidevBus` exists,
+/// 2. No other `spidev` device on the same bus may be used as long as this `SpidevBus` exists,
 ///    as Linux will _not_ do anything to ensure this bus has exclusive access.
 ///
-/// It is recommended to use a dummy spidev device associated with an unused CS pin, and then use
+/// It is recommended to use a dummy `spidev` device associated with an unused CS pin, and then use
 /// regular GPIOs as CS pins if required. If you are planning to share this bus using GPIOs, the
 /// [`embedded-hal-bus`] crate may be of interest.
 ///
