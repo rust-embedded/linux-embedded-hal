@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.0-alpha.4] - 2022-10-08
+
 ### Changed
 - [breaking-change] Replace serial-rs with the serialport-rs crate. `Serial::open` now needs a baud-rate argument as well.
+- [breaking-change] Split `Spidev` into `SpidevDevice` and `SpidevBus`, implementing the respective `SpiDevice` and `SpiBus` traits (#100)
 - Updated to `embedded-hal` `1.0.0-rc.1` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-rc1---2023-08-15))
 - Updated to `embedded-hal-nb` `1.0.0-rc.1` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal-nb/CHANGELOG.md#v100-rc1---2023-08-15))
 - Updated to `spidev` `0.6.0` release([API changes](https://github.com/rust-embedded/rust-spidev/blob/master/CHANGELOG.md#060--2023-08-03))
@@ -141,7 +144,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...HEAD
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.4...HEAD
+[v0.4.0-alpha.4]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
 [v0.4.0-alpha.3]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
 [v0.4.0-alpha.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.1...v0.4.0-alpha.2
 [v0.4.0-alpha.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.3.0...v0.4.0-alpha.1
