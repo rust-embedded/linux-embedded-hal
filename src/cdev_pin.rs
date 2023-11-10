@@ -69,12 +69,10 @@ impl CdevPin {
         // Drop self to free the line before re-requesting it in a new mode.
         std::mem::drop(self);
 
+        let is_active_low = output_flags.intersects(gpio_cdev::LineRequestFlags::ACTIVE_LOW);
         CdevPin::new(line.request(
             output_flags,
-            state_to_value(
-                state,
-                output_flags.intersects(gpio_cdev::LineRequestFlags::ACTIVE_LOW),
-            ),
+            state_to_value(state, is_active_low),
             &consumer,
         )?)
     }

@@ -22,7 +22,7 @@ jobs:
           - 'async-tokio,gpio_cdev,gpio_sysfs,i2c,spi'
 
         include:
-          - rust: 1.60.0 # MSRV
+          - rust: 1.65.0 # MSRV
             target: x86_64-unknown-linux-gnu
 
           # Test nightly but don't fail

@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated to `embedded-hal-nb` `1.0.0-rc.1` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal-nb/CHANGELOG.md#v100-rc1---2023-08-15))
 - Updated to `spidev` `0.6.0` release([API changes](https://github.com/rust-embedded/rust-spidev/blob/master/CHANGELOG.md#060--2023-08-03))
 - Updated to `i2cdev` `0.6.0` release([API changes](https://github.com/rust-embedded/rust-i2cdev/blob/master/CHANGELOG.md#v060---2023-08-03))
-- Updated to `nix` `0.26` to match `i2cdev`
+- Updated to `gpio_cdev` `0.6.0` release([API changes](https://github.com/rust-embedded/gpio-cdev/blob/master/CHANGELOG.md#v060--2023-09-11))
+- Updated to `nix` `0.27.1`
+- MSRV is now 1.65.0.
 
 ### Fixed
 - Fix using SPI transfer with unequal buffer sizes (#97, #98).
