@@ -1,3 +1,8 @@
+[![crates.io](https://img.shields.io/crates/d/linux-embedded-hal.svg)](https://crates.io/crates/linux-embedded-hal)
+[![crates.io](https://img.shields.io/crates/v/linux-embedded-hal.svg)](https://crates.io/crates/linux-embedded-hal)
+[![Documentation](https://docs.rs/linux-embedded-hal/badge.svg)](https://docs.rs/linux-embedded-hal)
+![Minimum Supported Rust Version](https://img.shields.io/badge/rustc-1.65+-blue.svg)
+
 # `linux-embedded-hal`
 
 > Implementation of the [`embedded-hal`] traits for Linux devices
