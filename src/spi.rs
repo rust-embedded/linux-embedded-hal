@@ -9,27 +9,96 @@ use std::io;
 use std::ops;
 use std::path::Path;
 
-/// Newtype around [`spidev::Spidev`] that implements the `embedded-hal` traits
+/// Spidev wrapper providing the embedded-hal [`SpiDevice`] trait.
 ///
-/// [Delay operations][delay] are capped to 65535 microseconds.
+/// Use this struct when you want a single spidev device, using a Linux-managed CS (chip-select) pin,
+/// which is already defined in your device tree. Linux will handle sharing the bus
+/// between different SPI devices, even between different processes.
 ///
-/// [`spidev::Spidev`]: https://docs.rs/spidev/0.5.2/spidev/struct.Spidev.html
-/// [delay]: embedded_hal::spi::Operation::DelayUs
-pub struct Spidev(pub spidev::Spidev);
+/// You get an object that implements [`SpiDevice`], which is what most drivers require,
+/// but does not implement [`SpiBus`]. In some rare cases, you may require [`SpiBus`]
+/// instead; for that refer to [`SpidevBus`] below. You may also want to use [`SpiBus`]
+/// if you want to handle all the CS pins yourself using GPIO.
+///
+/// This struct wraps a [`spidev::Spidev`] struct, so it can be constructed directly
+/// and the inner struct accessed if needed, for example to (re)configure the SPI settings.
+///
+/// Note that [delay operations] on this device are capped to 65535 microseconds.
+///
+/// [`SpiDevice`]: embedded_hal::spi::SpiDevice
+/// [`SpiBus`]: embedded_hal::spi::SpiBus
+/// [`spidev::Spidev`]: spidev::Spidev
+/// [delay operations]: embedded_hal::spi::Operation::DelayUs
+pub struct SpidevDevice(pub spidev::Spidev);
 
-impl Spidev {
-    /// See [`spidev::Spidev::open`][0] for details.
+/// Spidev wrapper providing the embedded-hal [`SpiBus`] trait.
+///
+/// Use this struct when you require direct access to the underlying SPI bus, for
+/// example when you want to use GPIOs as software-controlled CS (chip-select) pins to share the
+/// bus with multiple devices, or because a driver requires the entire bus (for
+/// example to drive smart LEDs).
+///
+/// Do not use this struct if you're accessing SPI devices that already appear in your
+/// device tree; you will not be able to drive CS pins that are already used by `spidev`
+/// as GPIOs. Instead use [`SpidevDevice`].
+///
+/// This struct must still be created from a [`spidev::Spidev`] device, but there are two
+/// important notes:
+///
+/// 1. The CS pin associated with this `spidev` device will be driven whenever any device accesses
+///    this bus, so it should be an unconnected or unused pin.
+/// 2. No other `spidev` device on the same bus may be used as long as this `SpidevBus` exists,
+///    as Linux will _not_ do anything to ensure this bus has exclusive access.
+///
+/// It is recommended to use a dummy `spidev` device associated with an unused CS pin, and then use
+/// regular GPIOs as CS pins if required. If you are planning to share this bus using GPIOs, the
+/// [`embedded-hal-bus`] crate may be of interest.
+///
+/// If necessary, you can [configure] the underlying [`spidev::Spidev`] instance with the
+/// [`SPI_NO_CS`] flag set to prevent any CS pin activity.
+///
+/// [`SpiDevice`]: embedded_hal::spi::SpiDevice
+/// [`SpiBus`]: embedded_hal::spi::SpiBus
+/// [`embedded-hal-bus`]: https://docs.rs/embedded-hal-bus/
+/// [`spidev::Spidev`]: spidev::Spidev
+/// [delay operations]: embedded_hal::spi::Operation::DelayUs
+/// [configure]: spidev::Spidev::configure
+/// [`SPI_NO_CS`]: spidev::SpiModeFlags::SPI_NO_CS
+pub struct SpidevBus(pub spidev::Spidev);
+
+impl SpidevDevice {
+    /// See [`spidev::Spidev::open`] for details.
     ///
-    /// [0]: https://docs.rs/spidev/0.5.2/spidev/struct.Spidev.html#method.open
+    /// The provided `path` is for the specific device you wish to access.
+    /// Access to the bus is shared with other devices via the Linux kernel.
     pub fn open<P>(path: P) -> Result<Self, SPIError>
     where
         P: AsRef<Path>,
     {
-        spidev::Spidev::open(path).map(Spidev).map_err(|e| e.into())
+        spidev::Spidev::open(path)
+            .map(SpidevDevice)
+            .map_err(|e| e.into())
     }
 }
 
-impl ops::Deref for Spidev {
+impl SpidevBus {
+    /// See [`spidev::Spidev::open`] for details.
+    ///
+    /// The provided `path` must be the _only_ device in use on its bus,
+    /// and note its own CS pin will be asserted for all device access,
+    /// so the path should be to a dummy device used only to access
+    /// the underlying bus.
+    pub fn open<P>(path: P) -> Result<Self, SPIError>
+    where
+        P: AsRef<Path>,
+    {
+        spidev::Spidev::open(path)
+            .map(SpidevBus)
+            .map_err(|e| e.into())
+    }
+}
+
+impl ops::Deref for SpidevDevice {
     type Target = spidev::Spidev;
 
     fn deref(&self) -> &Self::Target {
@@ -37,7 +106,21 @@ impl ops::Deref for Spidev {
     }
 }
 
-impl ops::DerefMut for Spidev {
+impl ops::DerefMut for SpidevDevice {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl ops::Deref for SpidevBus {
+    type Target = spidev::Spidev;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ops::DerefMut for SpidevBus {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -51,11 +134,15 @@ mod embedded_hal_impl {
     use std::convert::TryInto;
     use std::io::{Read, Write};
 
-    impl ErrorType for Spidev {
+    impl ErrorType for SpidevDevice {
         type Error = SPIError;
     }
 
-    impl SpiBus<u8> for Spidev {
+    impl ErrorType for SpidevBus {
+        type Error = SPIError;
+    }
+
+    impl SpiBus<u8> for SpidevBus {
         fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
             self.0.read_exact(words).map_err(|err| SPIError { err })
         }
@@ -97,7 +184,7 @@ mod embedded_hal_impl {
         }
     }
 
-    impl SpiDevice for Spidev {
+    impl SpiDevice for SpidevDevice {
         /// Perform a transaction against the device. [Read more][transaction]
         ///
         /// [Delay operations][delay] are capped to 65535 microseconds.

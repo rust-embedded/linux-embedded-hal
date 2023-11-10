@@ -53,5 +53,5 @@ pub use crate::delay::Delay;
 pub use crate::i2c::{I2CError, I2cdev};
 pub use crate::serial::{Serial, SerialError};
 #[cfg(feature = "spi")]
-pub use crate::spi::{SPIError, Spidev};
+pub use crate::spi::{SPIError, SpidevBus, SpidevDevice};
 pub use crate::timer::{CountDown, Periodic, SysTimer};
