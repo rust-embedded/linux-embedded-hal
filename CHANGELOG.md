@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v0.4.0-alpha.4] - 2022-10-08
+## [v0.4.0-alpha.4] - 2023-11-10
 
 ### Changed
 - [breaking-change] Replace serial-rs with the serialport-rs crate. `Serial::open` now needs a baud-rate argument as well.
