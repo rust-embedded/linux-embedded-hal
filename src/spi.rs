@@ -220,9 +220,9 @@ mod embedded_hal_impl {
                         };
                         transfers.push(SpidevTransfer::read_write(tx, buf));
                     }
-                    SpiOperation::DelayUs(us) => {
-                        let us = (*us).try_into().unwrap_or(u16::MAX);
-                        transfers.push(SpidevTransfer::delay(us));
+                    SpiOperation::DelayNs(ns) => {
+                        let ns = (*ns).try_into().unwrap_or(u16::MAX);
+                        transfers.push(SpidevTransfer::delay(ns));
                     }
                 }
             }
