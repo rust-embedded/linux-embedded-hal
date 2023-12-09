@@ -221,8 +221,19 @@ mod embedded_hal_impl {
                         transfers.push(SpidevTransfer::read_write(tx, buf));
                     }
                     SpiOperation::DelayNs(ns) => {
-                        let ns = (*ns).try_into().unwrap_or(u16::MAX);
-                        transfers.push(SpidevTransfer::delay(ns));
+                        let us = {
+                            if *ns == 0 {
+                                0
+                            } else {
+                                let us = *ns / 1000;
+                                if us == 0 {
+                                    1
+                                } else {
+                                    (us).try_into().unwrap_or(u16::MAX)
+                                }
+                            }
+                        };
+                        transfers.push(SpidevTransfer::delay(us));
                     }
                 }
             }
