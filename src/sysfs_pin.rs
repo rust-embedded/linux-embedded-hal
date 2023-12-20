@@ -108,7 +108,7 @@ impl embedded_hal::digital::OutputPin for SysfsPin {
 }
 
 impl embedded_hal::digital::InputPin for SysfsPin {
-    fn is_high(&self) -> Result<bool, Self::Error> {
+    fn is_high(&mut self) -> Result<bool, Self::Error> {
         if !self.0.get_active_low().map_err(SysfsPinError::from)? {
             self.0
                 .get_value()
@@ -122,7 +122,7 @@ impl embedded_hal::digital::InputPin for SysfsPin {
         }
     }
 
-    fn is_low(&self) -> Result<bool, Self::Error> {
+    fn is_low(&mut self) -> Result<bool, Self::Error> {
         self.is_high().map(|val| !val).map_err(SysfsPinError::from)
     }
 }
