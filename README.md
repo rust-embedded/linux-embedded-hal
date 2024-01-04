@@ -1,3 +1,8 @@
+[![crates.io](https://img.shields.io/crates/d/linux-embedded-hal.svg)](https://crates.io/crates/linux-embedded-hal)
+[![crates.io](https://img.shields.io/crates/v/linux-embedded-hal.svg)](https://crates.io/crates/linux-embedded-hal)
+[![Documentation](https://docs.rs/linux-embedded-hal/badge.svg)](https://docs.rs/linux-embedded-hal)
+![Minimum Supported Rust Version](https://img.shields.io/badge/rustc-1.65+-blue.svg)
+
 # `linux-embedded-hal`
 
 > Implementation of the [`embedded-hal`] traits for Linux devices
@@ -29,7 +34,7 @@ With `default-features = false` you can enable the features `gpio_cdev`, `gpio_s
 
 ## Minimum Supported Rust Version (MSRV)
 
-This crate is guaranteed to compile on stable Rust 1.60.0 and up. It *might*
+This crate is guaranteed to compile on stable Rust 1.65.0 and up. It *might*
 compile with older versions but that may change in any new patch release.
 
 ## License
