@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Updated to `embedded-hal` `1.0.0-alpha.8` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/CHANGELOG.md#v100-alpha8---2022-04-15))
+- Updated to `embedded-hal` `1.0.0-alpha.8` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-alpha8---2022-04-15))
 
 ## [v0.4.0-alpha.2] - 2022-02-15
 
@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Mappings for `embedded-hal` error kinds
 ### Changed
 
-- Updated to `embedded-hal` `1.0.0-alpha.7` release (significant [API changes](https://github.com/rust-embedded/embedded-hal/blob/master/CHANGELOG.md#v100-alpha7---2022-02-09))
+- Updated to `embedded-hal` `1.0.0-alpha.7` release (significant [API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100-alpha7---2022-02-09))
 - Updated dependencies to force use of newer nix version
   - `spidev` to version `0.5.1`
   - `i2cdev` to version `0.5.1`
