@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Updated to `embedded-hal` `1.0.0` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100---2023-12-28))
+- Updated to `embedded-hal-nb` `1.0.0` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal-nb/CHANGELOG.md#v100---2023-12-28))
+
 ## [v0.4.0-alpha.4] - 2024-01-03
 
 ### Changed
