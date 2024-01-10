@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.0] - 2024-01-10
+
 ### Changed
 - Updated to `embedded-hal` `1.0.0` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal/CHANGELOG.md#v100---2023-12-28))
 - Updated to `embedded-hal-nb` `1.0.0` release ([API changes](https://github.com/rust-embedded/embedded-hal/blob/master/embedded-hal-nb/CHANGELOG.md#v100---2023-12-28))
@@ -150,7 +152,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.4...HEAD
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.4...v0.4.0
 [v0.4.0-alpha.4]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
 [v0.4.0-alpha.3]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
 [v0.4.0-alpha.2]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.1...v0.4.0-alpha.2
