@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added async `DelayNs` implementation for `tokio`.
+
 ## [v0.4.0] - 2024-01-10
 
 ### Changed
