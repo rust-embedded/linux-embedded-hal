@@ -4,10 +4,63 @@
 
 use std::fmt;
 
+use embedded_hal::digital::InputPin;
+#[cfg(feature = "async-tokio")]
+use gpiocdev::{line::EdgeDetection, request::Request, tokio::AsyncRequest};
+
 /// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
 ///
 /// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.LineHandle.html
-pub struct CdevPin(pub gpio_cdev::LineHandle, gpio_cdev::LineInfo);
+#[derive(Debug)]
+pub struct CdevPin(pub Option<gpio_cdev::LineHandle>, gpio_cdev::LineInfo);
+
+#[cfg(feature = "async-tokio")]
+#[derive(Debug)]
+struct CdevPinEdgeWaiter<'a> {
+    pin: &'a mut CdevPin,
+    edge: EdgeDetection,
+}
+
+#[cfg(feature = "async-tokio")]
+impl<'a> CdevPinEdgeWaiter<'a> {
+    pub fn new(pin: &'a mut CdevPin, edge: EdgeDetection) -> Result<Self, gpiocdev::Error> {
+        Ok(Self { pin, edge })
+    }
+
+    pub async fn wait(self) -> Result<(), gpiocdev::Error> {
+        let line_handle = self.pin.0.take().unwrap();
+        let line_info = &self.pin.1;
+
+        let line = line_handle.line().clone();
+        let flags = line_handle.flags();
+        let chip = line.chip().path().to_owned();
+        let offset = line.offset();
+        let consumer = line_info.consumer().unwrap_or("").to_owned();
+        let edge = self.edge;
+
+        // Close line handle.
+        drop(line_handle);
+
+        let req = Request::builder()
+            .on_chip(chip)
+            .with_line(offset)
+            .as_is()
+            .with_consumer(consumer.clone())
+            .with_edge_detection(edge)
+            .request()?;
+
+        let req = AsyncRequest::new(req);
+        let event = req.read_edge_event().await;
+        drop(req);
+
+        // Recreate line handle.
+        self.pin.0 = Some(line.request(flags, 0, &consumer).unwrap());
+
+        event?;
+
+        Ok(())
+    }
+}
 
 impl CdevPin {
     /// See [`gpio_cdev::Line::request`][0] for details.
@@ -15,7 +68,11 @@ impl CdevPin {
     /// [0]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.Line.html#method.request
     pub fn new(handle: gpio_cdev::LineHandle) -> Result<Self, gpio_cdev::errors::Error> {
         let info = handle.line().info()?;
-        Ok(CdevPin(handle, info))
+        Ok(CdevPin(Some(handle), info))
+    }
+
+    fn line_handle(&self) -> &gpio_cdev::LineHandle {
+        self.0.as_ref().unwrap()
     }
 
     fn get_input_flags(&self) -> gpio_cdev::LineRequestFlags {
@@ -43,7 +100,7 @@ impl CdevPin {
         if self.1.direction() == gpio_cdev::LineDirection::In {
             return Ok(self);
         }
-        let line = self.0.line().clone();
+        let line = self.line_handle().line().clone();
         let input_flags = self.get_input_flags();
         let consumer = self.1.consumer().unwrap_or("").to_owned();
 
@@ -62,7 +119,7 @@ impl CdevPin {
             return Ok(self);
         }
 
-        let line = self.0.line().clone();
+        let line = self.line_handle().line().clone();
         let output_flags = self.get_output_flags();
         let consumer = self.1.consumer().unwrap_or("").to_owned();
 
@@ -138,7 +195,7 @@ impl embedded_hal::digital::ErrorType for CdevPin {
 
 impl embedded_hal::digital::OutputPin for CdevPin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.0
+        self.line_handle()
             .set_value(state_to_value(
                 embedded_hal::digital::PinState::Low,
                 self.1.is_active_low(),
@@ -147,7 +204,7 @@ impl embedded_hal::digital::OutputPin for CdevPin {
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.0
+        self.line_handle()
             .set_value(state_to_value(
                 embedded_hal::digital::PinState::High,
                 self.1.is_active_low(),
@@ -156,9 +213,9 @@ impl embedded_hal::digital::OutputPin for CdevPin {
     }
 }
 
-impl embedded_hal::digital::InputPin for CdevPin {
+impl InputPin for CdevPin {
     fn is_high(&mut self) -> Result<bool, Self::Error> {
-        self.0
+        self.line_handle()
             .get_value()
             .map(|val| {
                 val == state_to_value(
@@ -178,12 +235,49 @@ impl core::ops::Deref for CdevPin {
     type Target = gpio_cdev::LineHandle;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.line_handle()
     }
 }
 
 impl core::ops::DerefMut for CdevPin {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        self.0.as_mut().unwrap()
+    }
+}
+
+#[cfg(feature = "async-tokio")]
+impl embedded_hal_async::digital::Wait for CdevPin {
+    async fn wait_for_high(&mut self) -> Result<(), Self::Error> {
+        if self.is_high()? {
+            return Ok(());
+        }
+
+        self.wait_for_rising_edge().await
+    }
+
+    async fn wait_for_low(&mut self) -> Result<(), Self::Error> {
+        if self.is_low()? {
+            return Ok(());
+        }
+
+        self.wait_for_falling_edge().await
+    }
+
+    async fn wait_for_rising_edge(&mut self) -> Result<(), Self::Error> {
+        let waiter = CdevPinEdgeWaiter::new(self, EdgeDetection::RisingEdge).unwrap();
+        waiter.wait().await.unwrap();
+        Ok(())
+    }
+
+    async fn wait_for_falling_edge(&mut self) -> Result<(), Self::Error> {
+        let waiter = CdevPinEdgeWaiter::new(self, EdgeDetection::FallingEdge).unwrap();
+        waiter.wait().await.unwrap();
+        Ok(())
+    }
+
+    async fn wait_for_any_edge(&mut self) -> Result<(), Self::Error> {
+        let waiter = CdevPinEdgeWaiter::new(self, EdgeDetection::BothEdges).unwrap();
+        waiter.wait().await.unwrap();
+        Ok(())
     }
 }
