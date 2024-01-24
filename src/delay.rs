@@ -14,11 +14,27 @@ impl DelayNs for Delay {
     fn delay_ns(&mut self, n: u32) {
         thread::sleep(Duration::from_nanos(n.into()));
     }
+
+    fn delay_us(&mut self, n: u32) {
+        thread::sleep(Duration::from_micros(n.into()));
+    }
+
+    fn delay_ms(&mut self, n: u32) {
+        thread::sleep(Duration::from_millis(n.into()));
+    }
 }
 
 #[cfg(feature = "async-tokio")]
 impl embedded_hal_async::delay::DelayNs for Delay {
     async fn delay_ns(&mut self, n: u32) {
         tokio::time::sleep(Duration::from_nanos(n.into())).await;
+    }
+
+    async fn delay_us(&mut self, n: u32) {
+        tokio::time::sleep(Duration::from_micros(n.into())).await;
+    }
+
+    async fn delay_ms(&mut self, n: u32) {
+        tokio::time::sleep(Duration::from_millis(n.into())).await;
     }
 }
