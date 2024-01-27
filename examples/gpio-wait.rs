@@ -3,24 +3,28 @@ use std::time::Duration;
 
 use embedded_hal::digital::{InputPin, OutputPin, PinState};
 use embedded_hal_async::digital::Wait;
-use gpio_cdev::{Chip, LineRequestFlags};
+use gpiocdev::Request;
 use linux_embedded_hal::CdevPin;
 use tokio::time::{sleep, timeout};
 
 // This example assumes that input/output pins are shorted.
+const CHIP: &str = "/dev/gpiochip0";
 const INPUT_LINE: u32 = 4;
 const OUTPUT_LINE: u32 = 17;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut chip = Chip::new("/dev/gpiochip0")?;
-    let input = chip.get_line(INPUT_LINE)?;
-    let output = chip.get_line(OUTPUT_LINE)?;
+    let input = Request::builder()
+        .on_chip(CHIP)
+        .with_line(INPUT_LINE)
+        .request()?;
+    let output = Request::builder()
+        .on_chip(CHIP)
+        .with_line(OUTPUT_LINE)
+        .request()?;
 
-    let mut input_pin =
-        CdevPin::new(input.request(LineRequestFlags::INPUT, 0, "")?)?.into_input_pin()?;
-    let mut output_pin = CdevPin::new(output.request(LineRequestFlags::OUTPUT, 0, "")?)?
-        .into_output_pin(PinState::Low)?;
+    let mut input_pin = CdevPin::new(input)?.into_input_pin()?;
+    let mut output_pin = CdevPin::new(output)?.into_output_pin(PinState::Low)?;
 
     timeout(Duration::from_secs(10), async move {
         let set_output = tokio::spawn(async move {
@@ -30,7 +34,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         });
 
         println!("Waiting for input to go high.");
-
         input_pin.wait_for_high().await?;
 
         assert!(input_pin.is_high()?);
