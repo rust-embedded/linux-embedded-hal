@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use embedded_hal::digital::{InputPin, OutputPin, PinState};
 use embedded_hal_async::digital::Wait;
-use gpiocdev::Request;
 use linux_embedded_hal::CdevPin;
 use tokio::time::{sleep, timeout};
 
@@ -14,17 +13,8 @@ const OUTPUT_LINE: u32 = 17;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let input = Request::builder()
-        .on_chip(CHIP)
-        .with_line(INPUT_LINE)
-        .request()?;
-    let output = Request::builder()
-        .on_chip(CHIP)
-        .with_line(OUTPUT_LINE)
-        .request()?;
-
-    let mut input_pin = CdevPin::new(input)?.into_input_pin()?;
-    let mut output_pin = CdevPin::new(output)?.into_output_pin(PinState::Low)?;
+    let mut input_pin = CdevPin::new(CHIP, INPUT_LINE)?.into_input_pin()?;
+    let mut output_pin = CdevPin::new(CHIP, OUTPUT_LINE)?.into_output_pin(PinState::Low)?;
 
     timeout(Duration::from_secs(10), async move {
         let set_output = tokio::spawn(async move {

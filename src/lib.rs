@@ -27,11 +27,8 @@ pub use sysfs_gpio;
 mod sysfs_pin;
 
 #[cfg(feature = "gpio_cdev")]
-/// Cdev Pin wrapper module
 mod cdev_pin;
-
 #[cfg(feature = "gpio_cdev")]
-/// Cdev pin re-export
 pub use cdev_pin::{CdevPin, CdevPinError};
 
 #[cfg(feature = "gpio_sysfs")]

@@ -3,6 +3,7 @@
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use std::fmt;
+use std::path::Path;
 
 use embedded_hal::digital::InputPin;
 #[cfg(feature = "async-tokio")]
@@ -12,9 +13,7 @@ use gpiocdev::{
     request::{Config, Request},
 };
 
-/// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
-///
-/// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.LineHandle.html
+/// Newtype around [`gpiocdev::request::Request`] that implements the `embedded-hal` traits.
 #[derive(Debug)]
 pub struct CdevPin {
     req: Option<Request>,
@@ -23,12 +22,41 @@ pub struct CdevPin {
 }
 
 impl CdevPin {
-    /// See [`gpiocdev::request::Request`] for details.
+    /// Creates a new pin for the given `line` on the given `chip`.
+    ///
+    /// ```
+    /// use linux_embedded_hal::CdevPin;
+    /// # use linux_embedded_hal::CdevPinError;
+    ///
+    /// # fn main() -> Result<(), CdevPinError> {
+    /// let mut pin = CdevPin::new("/dev/gpiochip0", 4)?.into_output_pin()?;
+    /// pin.set_high()?;
+    /// # }
+    /// ```
+    pub fn new<P>(chip: P, line: u32) -> Result<Self, CdevPinError>
+    where
+        P: AsRef<Path>,
+    {
+        let req = Request::builder()
+            .on_chip(chip.as_ref())
+            .with_line(line)
+            .request()?;
+
+        let config = req.config();
+
+        Ok(Self {
+            req: Some(req),
+            config,
+            line,
+        })
+    }
+
+    /// Creates a new pin from a [`Request`](gpiocdev::request::Request).
     ///
     /// # Panics
     ///
-    /// Panics if the `Request` does not contain exactly one line.
-    pub fn new(req: Request) -> Result<Self, CdevPinError> {
+    /// Panics if the [`Request`](gpiocdev::request::Request) does not contain exactly one line.
+    pub fn from_request(req: Request) -> Result<Self, CdevPinError> {
         let config = req.config();
         let lines = config.lines();
 
@@ -79,7 +107,7 @@ impl CdevPin {
 
         drop(self.req.take());
 
-        CdevPin::new(Request::from_config(self.config).as_input().request()?)
+        CdevPin::from_request(Request::from_config(self.config).as_input().request()?)
     }
 
     /// Set this pin to output mode
@@ -96,7 +124,7 @@ impl CdevPin {
 
         drop(self.req.take());
 
-        CdevPin::new(
+        CdevPin::from_request(
             Request::from_config(self.config)
                 .as_output(state_to_value(state, is_active_low))
                 .request()?,
