@@ -7,7 +7,10 @@ use std::path::Path;
 
 use embedded_hal::digital::InputPin;
 #[cfg(feature = "async-tokio")]
-use gpiocdev::{line::EdgeDetection, tokio::AsyncRequest};
+use gpiocdev::{
+    line::{EdgeDetection, EdgeKind},
+    tokio::AsyncRequest,
+};
 use gpiocdev::{
     line::{Offset, Value},
     request::{Config, Request},
@@ -88,24 +91,16 @@ impl CdevPin {
         self.request().config()
     }
 
-    fn is_active_low(&self) -> bool {
-        self.line_config().active_low
-    }
-
-    fn line_config(&self) -> gpiocdev::line::Config {
-        // Unwrapping is fine, since `self.line` comes from a `Request` and is guaranteed to exist.
-        self.config().line_config(self.line).unwrap().clone()
-    }
-
     /// Set this pin to input mode
     pub fn into_input_pin(self) -> Result<CdevPin, CdevPinError> {
-        let line_config = self.line_config();
+        let config = self.config();
+        let line_config = config.line_config(self.line).unwrap();
 
         if line_config.direction == Some(gpiocdev::line::Direction::Input) {
             return Ok(self);
         }
 
-        let mut new_config = self.config();
+        let mut new_config = config;
         new_config.as_input();
         self.request().reconfigure(&new_config)?;
 
@@ -117,29 +112,18 @@ impl CdevPin {
         self,
         state: embedded_hal::digital::PinState,
     ) -> Result<CdevPin, CdevPinError> {
-        let line_config = self.line_config();
-
+        let config = self.config();
+        let line_config = config.line_config(self.line).unwrap();
         if line_config.direction == Some(gpiocdev::line::Direction::Output) {
             return Ok(self);
         }
+        let is_active_low = line_config.active_low;
 
-        let mut new_config = self.config();
-        new_config.as_output(state_to_value(state, line_config.active_low));
+        let mut new_config = config;
+        new_config.as_output(state_to_value(state, is_active_low));
         self.request().reconfigure(&new_config)?;
 
         Ok(self)
-    }
-
-    #[cfg(feature = "async-tokio")]
-    async fn wait_for_edge(&mut self, edge: EdgeDetection) -> Result<(), CdevPinError> {
-        if self.line_config().edge_detection != Some(edge) {
-            let mut new_config = self.config();
-            new_config.with_edge_detection(edge);
-            self.request().reconfigure(&new_config)?;
-        }
-
-        self.req.read_edge_event().await?;
-        Ok(())
     }
 }
 
@@ -197,7 +181,7 @@ impl embedded_hal::digital::ErrorType for CdevPin {
 impl embedded_hal::digital::OutputPin for CdevPin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         let line = self.line;
-        let is_active_low = self.is_active_low();
+        let is_active_low = self.config().line_config(line).unwrap().active_low;
         self.request()
             .set_value(
                 line,
@@ -209,7 +193,7 @@ impl embedded_hal::digital::OutputPin for CdevPin {
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
         let line = self.line;
-        let is_active_low = self.is_active_low();
+        let is_active_low = self.config().line_config(line).unwrap().active_low;
         self.request()
             .set_value(
                 line,
@@ -223,11 +207,10 @@ impl embedded_hal::digital::OutputPin for CdevPin {
 impl InputPin for CdevPin {
     fn is_high(&mut self) -> Result<bool, Self::Error> {
         let line = self.line;
+        let is_active_low = self.config().line_config(line).unwrap().active_low;
         self.request()
             .value(line)
-            .map(|val| {
-                val == state_to_value(embedded_hal::digital::PinState::High, self.is_active_low())
-            })
+            .map(|val| val == state_to_value(embedded_hal::digital::PinState::High, is_active_low))
             .map_err(CdevPinError::from)
     }
 
@@ -255,14 +238,55 @@ impl embedded_hal_async::digital::Wait for CdevPin {
     }
 
     async fn wait_for_rising_edge(&mut self) -> Result<(), Self::Error> {
-        self.wait_for_edge(EdgeDetection::RisingEdge).await
+        let config = self.config();
+        let line_config = config.line_config(self.line).unwrap();
+        if !matches!(
+            line_config.edge_detection,
+            Some(EdgeDetection::RisingEdge | EdgeDetection::BothEdges)
+        ) {
+            let mut new_config = config;
+            new_config.with_edge_detection(EdgeDetection::RisingEdge);
+            self.request().reconfigure(&new_config)?;
+        }
+
+        loop {
+            let event = self.req.read_edge_event().await?;
+            if event.kind == EdgeKind::Rising {
+                return Ok(());
+            }
+        }
     }
 
     async fn wait_for_falling_edge(&mut self) -> Result<(), Self::Error> {
-        self.wait_for_edge(EdgeDetection::FallingEdge).await
+        let config = self.config();
+        let line_config = config.line_config(self.line).unwrap();
+        if !matches!(
+            line_config.edge_detection,
+            Some(EdgeDetection::FallingEdge | EdgeDetection::BothEdges)
+        ) {
+            let mut new_config = config;
+            new_config.with_edge_detection(EdgeDetection::FallingEdge);
+            self.request().reconfigure(&new_config)?;
+        }
+
+        loop {
+            let event = self.req.read_edge_event().await?;
+            if event.kind == EdgeKind::Falling {
+                return Ok(());
+            }
+        }
     }
 
     async fn wait_for_any_edge(&mut self) -> Result<(), Self::Error> {
-        self.wait_for_edge(EdgeDetection::BothEdges).await
+        let config = self.config();
+        let line_config = config.line_config(self.line).unwrap();
+        if line_config.edge_detection != Some(EdgeDetection::BothEdges) {
+            let mut new_config = config;
+            new_config.with_edge_detection(EdgeDetection::BothEdges);
+            self.request().reconfigure(&new_config)?;
+        }
+
+        self.req.read_edge_event().await?;
+        Ok(())
     }
 }
