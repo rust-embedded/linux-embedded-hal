@@ -13,8 +13,8 @@ const OUTPUT_LINE: u32 = 17;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut input_pin = CdevPin::new(CHIP, INPUT_LINE)?.into_input_pin()?;
-    let mut output_pin = CdevPin::new(CHIP, OUTPUT_LINE)?.into_output_pin(PinState::Low)?;
+    let mut input_pin = CdevPin::new_input(CHIP, INPUT_LINE)?;
+    let mut output_pin = CdevPin::new_output(CHIP, OUTPUT_LINE, PinState::Low)?;
 
     timeout(Duration::from_secs(10), async move {
         let set_output = tokio::spawn(async move {
