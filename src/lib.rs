@@ -22,18 +22,13 @@ pub use spidev;
 #[cfg(feature = "gpio_sysfs")]
 pub use sysfs_gpio;
 
-#[cfg(feature = "gpio_cdev")]
-pub use gpio_cdev;
 #[cfg(feature = "gpio_sysfs")]
 /// Sysfs Pin wrapper module
 mod sysfs_pin;
 
 #[cfg(feature = "gpio_cdev")]
-/// Cdev Pin wrapper module
 mod cdev_pin;
-
 #[cfg(feature = "gpio_cdev")]
-/// Cdev pin re-export
 pub use cdev_pin::{CdevPin, CdevPinError};
 
 #[cfg(feature = "gpio_sysfs")]

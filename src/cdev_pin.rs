@@ -1,114 +1,189 @@
-//! Implementation of [`embedded-hal`] digital input/output traits using a Linux CDev pin
+//! Implementation of [`embedded-hal`] digital input/output traits using a Linux cdev pin.
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
 use std::fmt;
+use std::marker::PhantomData;
+use std::path::Path;
 
-/// Newtype around [`gpio_cdev::LineHandle`] that implements the `embedded-hal` traits
-///
-/// [`gpio_cdev::LineHandle`]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.LineHandle.html
-pub struct CdevPin(pub gpio_cdev::LineHandle, gpio_cdev::LineInfo);
+use embedded_hal::digital::{Error, ErrorType, InputPin, OutputPin, PinState, StatefulOutputPin};
+use gpiocdev::{
+    line::{Config, Direction, Offset, Value},
+    request::Request,
+};
+#[cfg(feature = "async-tokio")]
+use gpiocdev::{
+    line::{EdgeDetection, EdgeKind},
+    tokio::AsyncRequest,
+};
 
-impl CdevPin {
-    /// See [`gpio_cdev::Line::request`][0] for details.
+/// Marker type for a [`CdevPin`] in input mode.
+#[non_exhaustive]
+pub struct Input;
+
+/// Marker type for a [`CdevPin`] in output mode.
+#[non_exhaustive]
+pub struct Output;
+
+/// Wrapper around [`gpiocdev::request::Request`] that implements the `embedded-hal` traits.
+#[derive(Debug)]
+pub struct CdevPin<MODE> {
+    #[cfg(not(feature = "async-tokio"))]
+    req: Request,
+    #[cfg(feature = "async-tokio")]
+    req: AsyncRequest,
+    line: Offset,
+    line_config: Config,
+    mode: PhantomData<MODE>,
+}
+
+impl CdevPin<Input> {
+    /// Creates a new input pin for the given `line` on the given `chip`.
     ///
-    /// [0]: https://docs.rs/gpio-cdev/0.5.0/gpio_cdev/struct.Line.html#method.request
-    pub fn new(handle: gpio_cdev::LineHandle) -> Result<Self, gpio_cdev::errors::Error> {
-        let info = handle.line().info()?;
-        Ok(CdevPin(handle, info))
+    /// ```
+    /// use linux_embedded_hal::CdevPin;
+    /// # use linux_embedded_hal::CdevPinError;
+    ///
+    /// # fn main() -> Result<(), CdevPinError> {
+    /// let mut pin = CdevPin::new_input("/dev/gpiochip0", 4)?;
+    /// pin.is_high()?;
+    /// # }
+    /// ```
+    pub fn new_input<P>(chip: P, line: u32) -> Result<Self, CdevPinError>
+    where
+        P: AsRef<Path>,
+    {
+        let line_config = Config {
+            direction: Some(Direction::Input),
+            ..Default::default()
+        };
+
+        let req = Request::builder()
+            .on_chip(chip.as_ref())
+            .from_line_config(&line_config)
+            .request()?;
+
+        #[cfg(feature = "async-tokio")]
+        let req = AsyncRequest::new(req);
+
+        Ok(Self {
+            req,
+            line,
+            line_config,
+            mode: PhantomData,
+        })
     }
 
-    fn get_input_flags(&self) -> gpio_cdev::LineRequestFlags {
-        if self.1.is_active_low() {
-            return gpio_cdev::LineRequestFlags::INPUT | gpio_cdev::LineRequestFlags::ACTIVE_LOW;
-        }
-        gpio_cdev::LineRequestFlags::INPUT
-    }
+    /// Converts this input pin into an output pin with the given `initial_state`.
+    pub fn into_output<P>(self, initial_state: PinState) -> Result<CdevPin<Output>, CdevPinError> {
+        let new_value = self.state_to_value(initial_state);
 
-    fn get_output_flags(&self) -> gpio_cdev::LineRequestFlags {
-        let mut flags = gpio_cdev::LineRequestFlags::OUTPUT;
-        if self.1.is_active_low() {
-            flags.insert(gpio_cdev::LineRequestFlags::ACTIVE_LOW);
-        }
-        if self.1.is_open_drain() {
-            flags.insert(gpio_cdev::LineRequestFlags::OPEN_DRAIN);
-        } else if self.1.is_open_source() {
-            flags.insert(gpio_cdev::LineRequestFlags::OPEN_SOURCE);
-        }
-        flags
-    }
+        let req = self.req;
+        let mut new_config = req.as_ref().config();
+        new_config.as_output(new_value);
+        req.as_ref().reconfigure(&new_config)?;
 
-    /// Set this pin to input mode
-    pub fn into_input_pin(self) -> Result<CdevPin, gpio_cdev::errors::Error> {
-        if self.1.direction() == gpio_cdev::LineDirection::In {
-            return Ok(self);
-        }
-        let line = self.0.line().clone();
-        let input_flags = self.get_input_flags();
-        let consumer = self.1.consumer().unwrap_or("").to_owned();
+        let line = self.line;
+        let line_config = new_config.line_config(line).unwrap().clone();
 
-        // Drop self to free the line before re-requesting it in a new mode.
-        std::mem::drop(self);
-
-        CdevPin::new(line.request(input_flags, 0, &consumer)?)
-    }
-
-    /// Set this pin to output mode
-    pub fn into_output_pin(
-        self,
-        state: embedded_hal::digital::PinState,
-    ) -> Result<CdevPin, gpio_cdev::errors::Error> {
-        if self.1.direction() == gpio_cdev::LineDirection::Out {
-            return Ok(self);
-        }
-
-        let line = self.0.line().clone();
-        let output_flags = self.get_output_flags();
-        let consumer = self.1.consumer().unwrap_or("").to_owned();
-
-        // Drop self to free the line before re-requesting it in a new mode.
-        std::mem::drop(self);
-
-        let is_active_low = output_flags.intersects(gpio_cdev::LineRequestFlags::ACTIVE_LOW);
-        CdevPin::new(line.request(
-            output_flags,
-            state_to_value(state, is_active_low),
-            &consumer,
-        )?)
+        Ok(CdevPin {
+            req,
+            line,
+            line_config,
+            mode: PhantomData,
+        })
     }
 }
 
-/// Converts a pin state to the gpio_cdev compatible numeric value, accounting
-/// for the active_low condition.
-fn state_to_value(state: embedded_hal::digital::PinState, is_active_low: bool) -> u8 {
-    if is_active_low {
-        match state {
-            embedded_hal::digital::PinState::High => 0,
-            embedded_hal::digital::PinState::Low => 1,
-        }
-    } else {
-        match state {
-            embedded_hal::digital::PinState::High => 1,
-            embedded_hal::digital::PinState::Low => 0,
+impl CdevPin<Output> {
+    /// Creates a new output pin for the given `line` on the given `chip`,
+    /// initialized with the given `initial_state`.
+    ///
+    /// ```
+    /// use linux_embedded_hal::CdevPin;
+    /// # use linux_embedded_hal::CdevPinError;
+    ///
+    /// # fn main() -> Result<(), CdevPinError> {
+    /// let mut pin = CdevPin::new_output("/dev/gpiochip0", 4)?;
+    /// pin.is_set_high()?;
+    /// pin.set_high()?;
+    /// # }
+    /// ```
+    pub fn new_output<P>(chip: P, line: u32, initial_state: PinState) -> Result<Self, CdevPinError>
+    where
+        P: AsRef<Path>,
+    {
+        let line_config = Config {
+            direction: Some(Direction::Output),
+            active_low: false,
+            value: Some(match initial_state {
+                PinState::High => Value::Active,
+                PinState::Low => Value::Inactive,
+            }),
+            ..Default::default()
+        };
+
+        let req = Request::builder()
+            .on_chip(chip.as_ref())
+            .from_line_config(&line_config)
+            .request()?;
+
+        #[cfg(feature = "async-tokio")]
+        let req = AsyncRequest::new(req);
+
+        Ok(Self {
+            req,
+            line,
+            line_config,
+            mode: PhantomData,
+        })
+    }
+
+    /// Converts this output pin into an input pin.
+    pub fn into_input<P>(self) -> Result<CdevPin<Output>, CdevPinError> {
+        let req = self.req;
+        let mut new_config = req.as_ref().config();
+        new_config.as_input();
+        req.as_ref().reconfigure(&new_config)?;
+
+        let line = self.line;
+        let line_config = new_config.line_config(line).unwrap().clone();
+
+        Ok(CdevPin {
+            req,
+            line,
+            line_config,
+            mode: PhantomData,
+        })
+    }
+}
+
+impl<MODE> CdevPin<MODE> {
+    /// Converts a pin state to a value, depending on
+    /// whether the pin is configured as active-low.
+    fn state_to_value(&self, state: PinState) -> Value {
+        if self.line_config.active_low {
+            match state {
+                PinState::High => Value::Inactive,
+                PinState::Low => Value::Active,
+            }
+        } else {
+            match state {
+                PinState::High => Value::Active,
+                PinState::Low => Value::Inactive,
+            }
         }
     }
 }
 
-/// Error type wrapping [gpio_cdev::errors::Error](gpio_cdev::errors::Error) to implement [embedded_hal::digital::Error]
+/// Error type wrapping [`gpiocdev::Error`] to implement [`embedded_hal::digital::Error`].
 #[derive(Debug)]
 pub struct CdevPinError {
-    err: gpio_cdev::errors::Error,
+    err: gpiocdev::Error,
 }
 
-impl CdevPinError {
-    /// Fetch inner (concrete) [`gpio_cdev::errors::Error`]
-    pub fn inner(&self) -> &gpio_cdev::errors::Error {
-        &self.err
-    }
-}
-
-impl From<gpio_cdev::errors::Error> for CdevPinError {
-    fn from(err: gpio_cdev::errors::Error) -> Self {
+impl From<gpiocdev::Error> for CdevPinError {
+    fn from(err: gpiocdev::Error) -> Self {
         Self { err }
     }
 }
@@ -125,65 +200,132 @@ impl std::error::Error for CdevPinError {
     }
 }
 
-impl embedded_hal::digital::Error for CdevPinError {
+impl Error for CdevPinError {
     fn kind(&self) -> embedded_hal::digital::ErrorKind {
         use embedded_hal::digital::ErrorKind;
         ErrorKind::Other
     }
 }
 
-impl embedded_hal::digital::ErrorType for CdevPin {
+impl<MODE> ErrorType for CdevPin<MODE> {
     type Error = CdevPinError;
 }
 
-impl embedded_hal::digital::OutputPin for CdevPin {
+impl InputPin for CdevPin<Input> {
+    fn is_low(&mut self) -> Result<bool, Self::Error> {
+        let low_value = self.state_to_value(PinState::Low);
+        Ok(self.req.as_ref().value(self.line)? == low_value)
+    }
+
+    fn is_high(&mut self) -> Result<bool, Self::Error> {
+        let high_value = self.state_to_value(PinState::High);
+        Ok(self.req.as_ref().value(self.line)? == high_value)
+    }
+}
+
+impl OutputPin for CdevPin<Output> {
     fn set_low(&mut self) -> Result<(), Self::Error> {
-        self.0
-            .set_value(state_to_value(
-                embedded_hal::digital::PinState::Low,
-                self.1.is_active_low(),
-            ))
-            .map_err(CdevPinError::from)
+        let new_value = self.state_to_value(PinState::Low);
+
+        self.req.as_ref().set_value(self.line, new_value)?;
+        self.line_config.value = Some(new_value);
+
+        Ok(())
     }
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
-        self.0
-            .set_value(state_to_value(
-                embedded_hal::digital::PinState::High,
-                self.1.is_active_low(),
-            ))
-            .map_err(CdevPinError::from)
+        let new_value = self.state_to_value(PinState::High);
+
+        self.req.as_ref().set_value(self.line, new_value)?;
+        self.line_config.value = Some(new_value);
+
+        Ok(())
     }
 }
 
-impl embedded_hal::digital::InputPin for CdevPin {
-    fn is_high(&mut self) -> Result<bool, Self::Error> {
-        self.0
-            .get_value()
-            .map(|val| {
-                val == state_to_value(
-                    embedded_hal::digital::PinState::High,
-                    self.1.is_active_low(),
-                )
-            })
-            .map_err(CdevPinError::from)
+impl StatefulOutputPin for CdevPin<Output> {
+    #[inline]
+    fn is_set_low(&mut self) -> Result<bool, Self::Error> {
+        let low_value = self.state_to_value(PinState::Low);
+        Ok(self.line_config.value == Some(low_value))
     }
 
-    fn is_low(&mut self) -> Result<bool, Self::Error> {
-        self.is_high().map(|val| !val)
+    #[inline]
+    fn is_set_high(&mut self) -> Result<bool, Self::Error> {
+        let high_value = self.state_to_value(PinState::High);
+        Ok(self.line_config.value == Some(high_value))
     }
 }
 
-impl core::ops::Deref for CdevPin {
-    type Target = gpio_cdev::LineHandle;
+#[cfg(feature = "async-tokio")]
+impl embedded_hal_async::digital::Wait for CdevPin<Input> {
+    async fn wait_for_high(&mut self) -> Result<(), Self::Error> {
+        if self.is_high()? {
+            return Ok(());
+        }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        self.wait_for_rising_edge().await
     }
-}
 
-impl core::ops::DerefMut for CdevPin {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+    async fn wait_for_low(&mut self) -> Result<(), Self::Error> {
+        if self.is_low()? {
+            return Ok(());
+        }
+
+        self.wait_for_falling_edge().await
+    }
+
+    async fn wait_for_rising_edge(&mut self) -> Result<(), Self::Error> {
+        if !matches!(
+            self.line_config.edge_detection,
+            Some(EdgeDetection::RisingEdge | EdgeDetection::BothEdges)
+        ) {
+            let req = self.req.as_ref();
+            let mut new_config = req.config();
+            new_config.with_edge_detection(EdgeDetection::RisingEdge);
+            req.reconfigure(&new_config)?;
+            self.line_config.edge_detection = Some(EdgeDetection::RisingEdge);
+        }
+
+        loop {
+            let event = self.req.read_edge_event().await?;
+            if event.kind == EdgeKind::Rising {
+                return Ok(());
+            }
+        }
+    }
+
+    async fn wait_for_falling_edge(&mut self) -> Result<(), Self::Error> {
+        if !matches!(
+            self.line_config.edge_detection,
+            Some(EdgeDetection::FallingEdge | EdgeDetection::BothEdges)
+        ) {
+            let mut new_config = self.req.as_ref().config();
+            new_config.with_edge_detection(EdgeDetection::FallingEdge);
+            self.req.as_ref().reconfigure(&new_config)?;
+            self.line_config.edge_detection = Some(EdgeDetection::FallingEdge);
+        }
+
+        loop {
+            let event = self.req.read_edge_event().await?;
+            if event.kind == EdgeKind::Falling {
+                return Ok(());
+            }
+        }
+    }
+
+    async fn wait_for_any_edge(&mut self) -> Result<(), Self::Error> {
+        if !matches!(
+            self.line_config.edge_detection,
+            Some(EdgeDetection::BothEdges)
+        ) {
+            let mut new_config = self.req.as_ref().config();
+            new_config.with_edge_detection(EdgeDetection::BothEdges);
+            self.req.as_ref().reconfigure(&new_config)?;
+            self.line_config.edge_detection = Some(EdgeDetection::BothEdges);
+        }
+
+        self.req.read_edge_event().await?;
+        Ok(())
     }
 }
