@@ -121,19 +121,6 @@ impl CdevPin<Output> {
 }
 
 impl<MODE> CdevPin<MODE> {
-    #[inline]
-    fn request(&self) -> &Request {
-        #[cfg(not(feature = "async-tokio"))]
-        {
-            &self.req
-        }
-
-        #[cfg(feature = "async-tokio")]
-        {
-            self.req.as_ref()
-        }
-    }
-
     /// Converts a pin state to a value, depending on
     /// whether the pin is configured as active-low.
     fn state_to_value(&self, state: PinState) -> Value {
@@ -189,12 +176,12 @@ impl<MODE> ErrorType for CdevPin<MODE> {
 impl InputPin for CdevPin<Input> {
     fn is_low(&mut self) -> Result<bool, Self::Error> {
         let low_value = self.state_to_value(PinState::Low);
-        Ok(self.request().value(self.line)? == low_value)
+        Ok(self.req.as_ref().value(self.line)? == low_value)
     }
 
     fn is_high(&mut self) -> Result<bool, Self::Error> {
         let high_value = self.state_to_value(PinState::High);
-        Ok(self.request().value(self.line)? == high_value)
+        Ok(self.req.as_ref().value(self.line)? == high_value)
     }
 }
 
@@ -202,7 +189,7 @@ impl OutputPin for CdevPin<Output> {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         let new_value = self.state_to_value(PinState::Low);
 
-        self.request().set_value(self.line, new_value)?;
+        self.req.as_ref().set_value(self.line, new_value)?;
         self.line_config.value = Some(new_value);
 
         Ok(())
@@ -211,7 +198,7 @@ impl OutputPin for CdevPin<Output> {
     fn set_high(&mut self) -> Result<(), Self::Error> {
         let new_value = self.state_to_value(PinState::High);
 
-        self.request().set_value(self.line, new_value)?;
+        self.req.as_ref().set_value(self.line, new_value)?;
         self.line_config.value = Some(new_value);
 
         Ok(())
