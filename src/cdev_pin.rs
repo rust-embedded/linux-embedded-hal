@@ -1,4 +1,4 @@
-//! Implementation of [`embedded-hal`] digital input/output traits using a Linux CDev pin
+//! Implementation of [`embedded-hal`] digital input/output traits using a Linux cdev pin.
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal
 
@@ -16,8 +16,8 @@ use gpiocdev::{
     request::{Config, Request},
 };
 
-/// Newtype around [`gpiocdev::request::Request`] that implements the `embedded-hal` traits.
-#[cfg_attr(not(feature = "async-tokio"), derive(Debug))]
+/// Wrapper around [`gpiocdev::request::Request`] that implements the `embedded-hal` traits.
+#[derive(Debug)]
 pub struct CdevPin {
     #[cfg(not(feature = "async-tokio"))]
     req: Request,
