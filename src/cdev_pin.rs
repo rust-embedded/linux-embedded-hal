@@ -53,27 +53,6 @@ impl CdevPin {
         Ok(Self { req, line })
     }
 
-    /// Creates a new pin from a [`Request`](gpiocdev::request::Request).
-    ///
-    /// # Panics
-    ///
-    /// Panics if the [`Request`](gpiocdev::request::Request) does not contain exactly one line.
-    pub fn from_request(req: Request) -> Result<Self, CdevPinError> {
-        let config = req.config();
-        let lines = config.lines();
-
-        assert!(
-            lines.len() == 1,
-            "A `CdevPin` must correspond to a single GPIO line."
-        );
-        let line = lines[0];
-
-        #[cfg(feature = "async-tokio")]
-        let req = AsyncRequest::new(req);
-
-        Ok(CdevPin { req, line })
-    }
-
     #[inline]
     fn request(&self) -> &Request {
         #[cfg(not(feature = "async-tokio"))]
