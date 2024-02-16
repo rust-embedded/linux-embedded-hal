@@ -73,6 +73,26 @@ impl CdevPin<Input> {
             mode: PhantomData,
         })
     }
+
+    /// Converts this input pin into an output pin with the given `initial_state`.
+    pub fn into_output<P>(self, initial_state: PinState) -> Result<CdevPin<Output>, CdevPinError> {
+        let new_value = self.state_to_value(initial_state);
+
+        let req = self.req;
+        let mut new_config = req.as_ref().config();
+        new_config.as_output(new_value);
+        req.as_ref().reconfigure(&new_config)?;
+
+        let line = self.line;
+        let line_config = new_config.line_config(line).unwrap().clone();
+
+        Ok(CdevPin {
+            req,
+            line,
+            line_config,
+            mode: PhantomData,
+        })
+    }
 }
 
 impl CdevPin<Output> {
@@ -112,6 +132,24 @@ impl CdevPin<Output> {
         let req = AsyncRequest::new(req);
 
         Ok(Self {
+            req,
+            line,
+            line_config,
+            mode: PhantomData,
+        })
+    }
+
+    /// Converts this output pin into an input pin.
+    pub fn into_input<P>(self) -> Result<CdevPin<Output>, CdevPinError> {
+        let req = self.req;
+        let mut new_config = req.as_ref().config();
+        new_config.as_input();
+        req.as_ref().reconfigure(&new_config)?;
+
+        let line = self.line;
+        let line_config = new_config.line_config(line).unwrap().clone();
+
+        Ok(CdevPin {
             req,
             line,
             line_config,
@@ -242,9 +280,10 @@ impl embedded_hal_async::digital::Wait for CdevPin<Input> {
             self.line_config.edge_detection,
             Some(EdgeDetection::RisingEdge | EdgeDetection::BothEdges)
         ) {
-            let mut new_config = self.req.as_ref().config();
+            let req = self.req.as_ref();
+            let mut new_config = req.config();
             new_config.with_edge_detection(EdgeDetection::RisingEdge);
-            self.req.as_ref().reconfigure(&new_config)?;
+            req.reconfigure(&new_config)?;
             self.line_config.edge_detection = Some(EdgeDetection::RisingEdge);
         }
 
