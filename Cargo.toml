@@ -18,18 +18,19 @@ gpio_cdev = ["gpio-cdev"]
 async-tokio = ["gpio-cdev/async-tokio", "dep:embedded-hal-async", "tokio/time"]
 i2c = ["i2cdev"]
 spi = ["spidev"]
+serial = ["serialport", "embedded-hal-nb"]
 
-default = [ "gpio_cdev", "gpio_sysfs", "i2c", "spi" ]
+default = [ "gpio_cdev", "gpio_sysfs", "i2c", "spi", "serial" ]
 
 [dependencies]
 embedded-hal = "1"
-embedded-hal-nb = "1"
+embedded-hal-nb = { version = "1", optional = true }
 embedded-hal-async = { version = "1", optional = true }
 gpio-cdev = { version = "0.6.0", optional = true }
 sysfs_gpio = { version = "0.6.1", optional = true }
 i2cdev = { version = "0.6.0", optional = true }
 nb = "1"
-serialport = { version = "4.2.0", default-features = false }
+serialport = { version = "4.2.0", default-features = false, optional = true }
 spidev = { version = "0.6.0", optional = true }
 nix = "0.27.1"
 tokio = { version = "1", default-features = false, optional = true }

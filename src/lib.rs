@@ -15,6 +15,7 @@
 #[cfg(feature = "i2c")]
 pub use i2cdev;
 pub use nb;
+#[cfg(feature = "serial")]
 pub use serialport;
 #[cfg(feature = "spi")]
 pub use spidev;
@@ -43,6 +44,7 @@ pub use sysfs_pin::{SysfsPin, SysfsPinError};
 mod delay;
 #[cfg(feature = "i2c")]
 mod i2c;
+#[cfg(feature = "serial")]
 mod serial;
 #[cfg(feature = "spi")]
 mod spi;
@@ -51,6 +53,7 @@ mod timer;
 pub use crate::delay::Delay;
 #[cfg(feature = "i2c")]
 pub use crate::i2c::{I2CError, I2cdev};
+#[cfg(feature = "serial")]
 pub use crate::serial::{Serial, SerialError};
 #[cfg(feature = "spi")]
 pub use crate::spi::{SPIError, SpidevBus, SpidevDevice};
