@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Added async `DelayNs` implementation for `tokio`.
+- Added feature flag for `serial`.
 
 ## [v0.4.0] - 2024-01-10
 
