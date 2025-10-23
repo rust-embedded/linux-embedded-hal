@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix UB (and remove unsafe block) in handling of SpiOperation::TransferInPlace
+
 ## [v0.4.0] - 2024-01-10
 
 ### Changed
