@@ -37,6 +37,9 @@ jobs:
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
 
+      - if: ${{ matrix.rust=='1.65.0' }}
+        run: cargo update --precise 2.0.106 --package syn
+
       - name: Install armv7 libraries
         if: ${{ matrix.target == 'armv7-unknown-linux-gnueabihf' }}
         run: |
