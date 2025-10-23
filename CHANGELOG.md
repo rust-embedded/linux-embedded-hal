@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added async `DelayNs` implementation for `tokio`.
 - Added feature flag for `serial`.
 
+### Fixed
+
+- Fix UB (and remove unsafe block) in handling of SpiOperation::TransferInPlace
+
 ## [v0.4.0] - 2024-01-10
 
 ### Changed
