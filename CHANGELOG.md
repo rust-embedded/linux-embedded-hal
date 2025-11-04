@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.4.1] - 2025-11-06
+
 ### Fixed
 
 - Fix UB (and remove unsafe block) in handling of SpiOperation::TransferInPlace
@@ -156,7 +158,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.1...HEAD
+[v0.4.1]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0...v0.4.1
 [v0.4.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.4...v0.4.0
 [v0.4.0-alpha.4]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
 [v0.4.0-alpha.3]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
