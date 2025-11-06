@@ -173,9 +173,8 @@ mod embedded_hal_impl {
         }
 
         fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
-            let tx = words.to_owned();
             self.0
-                .transfer(&mut SpidevTransfer::read_write(&tx, words))
+                .transfer(&mut SpidevTransfer::read_write_in_place(words))
                 .map_err(|err| SPIError { err })
         }
 
@@ -214,11 +213,7 @@ mod embedded_hal_impl {
                         }
                     },
                     SpiOperation::TransferInPlace(buf) => {
-                        let tx = unsafe {
-                            let p = buf.as_ptr();
-                            std::slice::from_raw_parts(p, buf.len())
-                        };
-                        transfers.push(SpidevTransfer::read_write(tx, buf));
+                        transfers.push(SpidevTransfer::read_write_in_place(buf));
                     }
                     SpiOperation::DelayNs(ns) => {
                         let us = {
