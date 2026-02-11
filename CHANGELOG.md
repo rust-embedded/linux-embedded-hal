@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- MSRV is now 1.84.0.
+- Set `resolver = "3"`, which implies `resolver.incompatible-rust-versions = "fallback"`
+
 ### Added
 
 - Added async `DelayNs` implementation for `tokio`.
