@@ -15,7 +15,7 @@ pub trait Periodic {}
 /// # Contract
 ///
 /// - `self.start(count); block!(self.wait());` MUST block for AT LEAST the time specified by
-/// `count`.
+///   `count`.
 ///
 /// *Note* that the implementer doesn't necessarily have to be a *downcounting* timer; it could also
 /// be an *upcounting* timer as long as the above contract is upheld.
@@ -71,9 +71,9 @@ pub trait CountDown {
     /// # Contract
     ///
     /// - If `Self: Periodic`, the timer will start a new count down right after the last one
-    /// finishes.
+    ///   finishes.
     /// - Otherwise the behavior of calling `wait` after the last call returned `Ok` is UNSPECIFIED.
-    /// Implementers are suggested to panic on this scenario to signal a programmer error.
+    ///   Implementers are suggested to panic on this scenario to signal a programmer error.
     fn wait(&mut self) -> nb::Result<(), Self::Error>;
 }
 

@@ -11,6 +11,8 @@ name = "linux-embedded-hal"
 repository = "https://github.com/rust-embedded/linux-embedded-hal"
 version = "0.5.0-alpha.0"
 edition = "2018"
+rust-version = "1.84"
+resolver = "3"
 
 [features]
 gpio_sysfs = ["sysfs_gpio"]
