@@ -123,7 +123,7 @@ impl embedded_hal::digital::InputPin for SysfsPin {
     }
 
     fn is_low(&mut self) -> Result<bool, Self::Error> {
-        self.is_high().map(|val| !val).map_err(SysfsPinError::from)
+        self.is_high().map(|val| !val)
     }
 }
 
