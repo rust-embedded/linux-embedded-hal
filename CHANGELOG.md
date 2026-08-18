@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.5.0]
+
 ### Changed
 
 - MSRV is now 1.85.0.
@@ -168,7 +170,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial release
 
-[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.4...v0.4.0
 [v0.4.0-alpha.4]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.3...v0.4.0-alpha.4
 [v0.4.0-alpha.3]: https://github.com/rust-embedded/linux-embedded-hal/compare/v0.4.0-alpha.2...v0.4.0-alpha.3
