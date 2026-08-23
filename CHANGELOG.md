@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - MSRV is now 1.85.0.
 - Set `resolver = "3"`, which implies `resolver.incompatible-rust-versions = "fallback"`
+- Updated to `nix` `0.31.3`
+- Updated to `spidev` `0.7.1`
 
 ### Added
 
