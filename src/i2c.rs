@@ -42,6 +42,17 @@ impl I2cdev {
     }
 }
 
+impl fmt::Debug for I2cdev {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("I2cdev")
+            .field("path", &self.path)
+            .field("address", &self.address)
+            // For the inner field we provide a placeholder, i2cdev does not impl Debug for LinuxI2CDevice
+            .field("inner", &format!("LinuxI2CDevice<path: {:?}>", self.path))
+            .finish()
+    }
+}
+
 impl ops::Deref for I2cdev {
     type Target = i2cdev::linux::LinuxI2CDevice;
 
